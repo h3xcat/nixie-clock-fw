@@ -7,7 +7,7 @@
 #define _CONFIG_RTC_SYNC_INTERVAL 30*ONE_SECOND
 
 #define _CONFIG_GPS_ENABLED 1 // Enables GPS synchronization on Mega boards
-#define _CONFIG_GPS_SYNC_INTERVAL 10*ONE_SECOND
+#define _CONFIG_GPS_SYNC_INTERVAL 1*ONE_SECOND
 
 #define _CONFIG_IR_ENABLED 1 // Enables IR remote functionality
 
@@ -66,10 +66,13 @@ void gps_sync_check(){
         GPSTime.getUtcTime( &timeinfo_utc );
         
         time_t time_utc = makeTime(timeinfo_utc);
+        time_utc += GPSTime.millisSinceUpdate()/1000;
         if(GPSTime.millisSinceUpdate()>=500)
           ++time_utc;
           
-        breakTime(time_utc,timeinfo_local);
+        time_t time_local = time_utc + (-8 + 1) * 3600;
+          
+        breakTime(time_local,timeinfo_local);
     
         Serial.write("UTC:   ");
         Serial.write(timeStr(timeinfo_utc));
@@ -77,9 +80,12 @@ void gps_sync_check(){
         Serial.write("LOCAL: ");
         Serial.write(timeStr(timeinfo_local));
         Serial.write("\r\n");
+
+        
+        Nixie.setNumber( ((unsigned long)timeinfo_local.Hour)*10000 + timeinfo_local.Minute*100 + timeinfo_local.Second );
+        Nixie.setDots( time_local % 2 );
         
         setTime(time_utc);
-        adjustTime((-8 + 1) * 3600);
       };break;
     }
   }
@@ -90,12 +96,10 @@ void rtc_sync_check(){
   static unsigned long next_check = millis();
   
   if(next_check<=millis()){
-    //next_check += _CONFIG_RTC_SYNC_INTERVAL;
-    next_check += 100;
+    next_check += _CONFIG_RTC_SYNC_INTERVAL;
     static unsigned long test = 0;
     test += 1;
     test %= 10;
-    Nixie.setNumber(test*111111);
   }
 }
 
@@ -103,6 +107,7 @@ void setup(){
   Wire.begin();
   SPI.begin(); 
   Nixie.begin();
+  Nixie.setACP(SINGLE2, 10000, 100);
   GPSTime.begin(false,&Serial1); 
   
   Serial.begin(230400);
