@@ -1,0 +1,4 @@
+#define ONE_SECOND 1000
+#define ONE_MINUTE (60*ONE_SECOND)
+#define ONE_HOUR (60*ONE_MINUTE)
+#define ONE_DAY (24*ONE_HOUR)
