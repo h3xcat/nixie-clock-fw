@@ -30,6 +30,7 @@
 #include <OneWire.h>
 
 #include "Nixie.h"
+#include "TimeKeeper.h"
 
 #if _CONFIG_GPS_ENABLED
   #include "GPSTime.h"
@@ -58,7 +59,7 @@ void gps_sync_check(){
         GPSTime.reset();
         Serial.println("GPS Sync");
         
-        next_check += _CONFIG_GPS_SYNC_INTERVAL;
+        next_check = millis() + _CONFIG_GPS_SYNC_INTERVAL;
         
         TimeElements timeinfo_utc = {};
         TimeElements timeinfo_local = {};
@@ -69,10 +70,9 @@ void gps_sync_check(){
         time_utc += GPSTime.millisSinceUpdate()/1000;
         if(GPSTime.millisSinceUpdate()>=500)
           ++time_utc;
-          
-        time_t time_local = time_utc + (-8 + 1) * 3600;
-          
-        breakTime(time_local,timeinfo_local);
+
+        TimeKeeper.setEpoch(time_utc);
+        TimeKeeper.getLocalTime(timeinfo_local);
     
         Serial.write("UTC:   ");
         Serial.write(timeStr(timeinfo_utc));
@@ -83,7 +83,7 @@ void gps_sync_check(){
 
         
         Nixie.setNumber( ((unsigned long)timeinfo_local.Hour)*10000 + timeinfo_local.Minute*100 + timeinfo_local.Second );
-        Nixie.setDots( time_local % 2 );
+        Nixie.setDots( time_utc % 2 );
         
         setTime(time_utc);
       };break;
@@ -107,8 +107,11 @@ void setup(){
   Wire.begin();
   SPI.begin(); 
   Nixie.begin();
-  Nixie.setACP(SINGLE2, 10000, 100);
+  Nixie.setACP(ALL, 30000, 100);
   GPSTime.begin(false,&Serial1); 
+
+  TimeKeeper.setDst(DST::USA);
+  TimeKeeper.setTimeZone(-8);
   
   Serial.begin(230400);
   Serial.write("H3xCat's NixieClock Firmware\r\n");

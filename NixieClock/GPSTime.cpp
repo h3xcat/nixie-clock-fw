@@ -110,14 +110,18 @@ int GPSTimeClass::getDayOfWeek( int day, int month, int year, int cent ){
 
 void GPSTimeClass::processMessage( const char * msg, unsigned long msgTime ){
   if(*(msg+3)=='R' && *(msg+4)=='M' && *(msg+5)=='C'){ // We're mainly interested in time and date, which RMC contains
-    if(!isMessageValid( msg )) // Making sure our message is not corrupt
+    if(!isMessageValid( msg )){ // Making sure our message is not corrupt
+      Serial.println("GPSTime: Corrupt RMC message!");
       return;
-    
+    }
+
     // Check message status
     char rmc_status[2];
     getMessageArg(rmc_status, msg, 1 );
-    if(*rmc_status != 'A')
+    if(*rmc_status != 'A') {
+      //Serial.println("GPSTime: Received void RMC message!"); // Means no signal (can be caused by weather and such)
       return;
+    }
       
     // Get Time
     char str_time[16];
