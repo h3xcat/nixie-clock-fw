@@ -2,19 +2,10 @@
 
 # NixieClockFW
 
-Custom firmware for NCS314 **HW2.0**. The goal of this firmware is to seperate different functions of the clock into seperate modules/files, for easier customization.
+Custom firmware for NCS314 **HW2.0**. The goal of this project is to make the firmware easy to read, and easy to customize.
 
-# Modules (might change)
-
-- [X] GPSTime
-- [ ] Nixie
-- [ ] Nokring
-- [ ] DS3231
-- [ ] UserSetting (EEPROM)
-- [ ] Menu
-- [ ] Alarm
-- [ ] etc...
+Originally I wanted to modify the original firmware of NCS314, but I had hard time to understand the code. I've decided to scrap the idea of modifying the firmware, and decided to write my own.
 
 # Disclaimer
 
-Do not use with any other hardware version, other than 2.0, as it might possibly cause damage to the shield. 
+I cannot guarantee this will work with other hardware versions, and I would strongly advise you not to try. Using this firmware with other hardware version(other than HW2.0) might cause damage to the shield.
