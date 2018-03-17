@@ -67,8 +67,9 @@ void gps_sync_check(){
         GPSTime.getUtcTime( &timeinfo_utc );
         
         time_t time_utc = makeTime(timeinfo_utc);
+        time_t latency = GPSTime.millisSinceUpdate();
         time_utc += GPSTime.millisSinceUpdate()/1000;
-        if(GPSTime.millisSinceUpdate()>=500)
+        if(latency>=500 && latency <1000)
           ++time_utc;
 
         TimeKeeper.setEpoch(time_utc);
