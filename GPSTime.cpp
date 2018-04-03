@@ -115,7 +115,6 @@ void GPSTimeClass::processMessage( const char * msg, unsigned long msgTime ){
       Serial.println("GPSTime: Corrupt RMC message!");
       return;
     }
-    Serial.println(msg);
     
     // Check message status
     char rmc_status[2];

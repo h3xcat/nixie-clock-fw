@@ -36,10 +36,7 @@
   #include "GPSTime.h"
 #endif
 
-
-
-char * timeStr( const TimeElements &tm )
-{
+char * timeStr( const TimeElements &tm ) {
   char s_day[10];
   char s_mon[10];
   strcpy(s_day,dayShortStr(tm.Wday));
@@ -48,10 +45,12 @@ char * timeStr( const TimeElements &tm )
   sprintf(str,"%s %s %d %d:%02d:%02d %d", s_day, s_mon, tm.Day, tm.Hour, tm.Minute, tm.Second, tm.Year+1970);
   return str;
 }
-void gps_sync_check(){
+
+#if _CONFIG_GPS_ENABLED
+void gps_sync_check() {
   static unsigned long last_updated = 0;
   
-  if(millis()-last_updated > _CONFIG_GPS_SYNC_INTERVAL){
+  if(millis()-last_updated > _CONFIG_GPS_SYNC_INTERVAL) {
     switch(GPSTime.getStatus()){
       case IDLE: GPSTime.request(); Serial.println("Initiating GPS sync."); break;
       case WAITING: break;
@@ -80,9 +79,9 @@ void gps_sync_check(){
     }
   }
 }
+#endif
 
-
-void nixie_update_check(){
+void nixie_update_check() {
   static unsigned long last_updated = 0;
   
   if(millis()-last_updated > _CONFIG_NIXIE_UPDATE_INTERVAL){
@@ -91,10 +90,6 @@ void nixie_update_check(){
     TimeElements timeinfo_local = {};
     TimeKeeper.getLocalTime(timeinfo_local);
 
-    Serial.write("LOCAL: ");
-    Serial.write(timeStr(timeinfo_local));
-    Serial.write("\r\n");
-
     Nixie.setNumber( ((unsigned long)timeinfo_local.Hour)*10000 + timeinfo_local.Minute*100 + timeinfo_local.Second );
     Nixie.setDots( timeinfo_local.Second % 2 );
   }
@@ -102,12 +97,14 @@ void nixie_update_check(){
 
 //// SETUP ///////////////////////////////////////////////////////////////////////////
 
-void setup(){
+void setup() {
   Wire.begin();
   SPI.begin(); 
   Nixie.begin();
   TimeKeeper.begin();
-  GPSTime.begin(false,&Serial1); 
+  #if _CONFIG_GPS_ENABLED
+  GPSTime.begin(false,&Serial1);
+  #endif 
 
   Nixie.setACP(ALL, 30000, 100);
 
@@ -120,11 +117,16 @@ void setup(){
 
 //// LOOP ////////////////////////////////////////////////////////////////////////////
 
-void loop(){
+void loop() {
+  #if _CONFIG_GPS_ENABLED
   GPSTime.update();
+  #endif
+
   Nixie.update();
   
+  #if _CONFIG_GPS_ENABLED
   gps_sync_check();
+  #endif
   nixie_update_check();
 }
 

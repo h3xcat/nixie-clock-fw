@@ -11,8 +11,6 @@ enum class DST {NONE, USA, EU};
 typedef unsigned char uint8_t;
 typedef signed char int8_t;
 
-
-
 class TimeKeeperClass
 {
 	private:
