@@ -111,10 +111,12 @@ int GPSTimeClass::getDayOfWeek( int day, int month, int year, int cent ){
 void GPSTimeClass::processMessage( const char * msg, unsigned long msgTime ){
   if(*(msg+3)=='R' && *(msg+4)=='M' && *(msg+5)=='C'){ // We're mainly interested in time and date, which RMC contains
     if(!isMessageValid( msg )){ // Making sure our message is not corrupt
+      Serial.println(msg);
       Serial.println("GPSTime: Corrupt RMC message!");
       return;
     }
-
+    Serial.println(msg);
+    
     // Check message status
     char rmc_status[2];
     getMessageArg(rmc_status, msg, 1 );
@@ -149,7 +151,7 @@ void GPSTimeClass::processMessage( const char * msg, unsigned long msgTime ){
     utcTime.Year = (date % 100)+30;
     utcTime.Wday = getDayOfWeek( utcTime.Day, utcTime.Month, utcTime.Year - 30, 20 );
     
-    timeUpdated = msgTime-mil; // Making more precise
+    timeUpdated = msgTime-mil;
 
     status = FINISHED;
 
@@ -204,7 +206,10 @@ void GPSTimeClass::update() { // Scan portion ----------------------------------
 
           byte curBaudRate =      scanCurSetting & 0b00000111;
           byte curSerialConfig = (scanCurSetting & 0b00001000) >> 3;
+          
+          msgBuf[0] = 0;
           msgLen = 0;
+
           serialBaud = serialBaudRates[curBaudRate];
           serialConfig = serialConfigs[curSerialConfig];
         }
@@ -230,6 +235,8 @@ void GPSTimeClass::update() { // Scan portion ----------------------------------
       } else if (c == '\r' || c == '\n'){
         msgBuf[msgLen] = 0;
         processMessage( msgBuf, msgTime );
+        msgBuf[0] = 0;
+        msgLen = 0;
       } else if (msgLen < 127){
         msgBuf[msgLen++] = c;
       } else {

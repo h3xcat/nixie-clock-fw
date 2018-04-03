@@ -4,10 +4,10 @@
 // START OF CONFIG ///////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////
 
-#define _CONFIG_RTC_SYNC_INTERVAL 30*ONE_SECOND
+#define _CONFIG_NIXIE_UPDATE_INTERVAL 500*ONE_MILLISECOND
 
 #define _CONFIG_GPS_ENABLED 1 // Enables GPS synchronization on Mega boards
-#define _CONFIG_GPS_SYNC_INTERVAL 1*ONE_SECOND
+#define _CONFIG_GPS_SYNC_INTERVAL 1*ONE_MINUTE
 
 #define _CONFIG_IR_ENABLED 1 // Enables IR remote functionality
 
@@ -49,67 +49,67 @@ char * timeStr( const TimeElements &tm )
   return str;
 }
 void gps_sync_check(){
-  static unsigned long next_check = millis();
+  static unsigned long last_updated = 0;
   
-  if(next_check<=millis()){
+  if(millis()-last_updated > _CONFIG_GPS_SYNC_INTERVAL){
     switch(GPSTime.getStatus()){
       case IDLE: GPSTime.request(); Serial.println("Initiating GPS sync."); break;
       case WAITING: break;
       case FINISHED:{
+        last_updated = millis();
+
         GPSTime.reset();
         Serial.println("GPS Sync");
         
-        next_check = millis() + _CONFIG_GPS_SYNC_INTERVAL;
-        
         TimeElements timeinfo_utc = {};
-        TimeElements timeinfo_local = {};
     
         GPSTime.getUtcTime( &timeinfo_utc );
         
         time_t time_utc = makeTime(timeinfo_utc);
         time_t latency = GPSTime.millisSinceUpdate();
-        time_utc += GPSTime.millisSinceUpdate()/1000;
-        if(latency>=500 && latency <1000)
+        if(latency%1000 >= 500)
           ++time_utc;
+        time_utc += latency/1000;
 
         TimeKeeper.setEpoch(time_utc);
-        TimeKeeper.getLocalTime(timeinfo_local);
     
         Serial.write("UTC:   ");
         Serial.write(timeStr(timeinfo_utc));
         Serial.write("\r\n");
-        Serial.write("LOCAL: ");
-        Serial.write(timeStr(timeinfo_local));
-        Serial.write("\r\n");
-
-        
-        Nixie.setNumber( ((unsigned long)timeinfo_local.Hour)*10000 + timeinfo_local.Minute*100 + timeinfo_local.Second );
-        Nixie.setDots( time_utc % 2 );
-        
-        setTime(time_utc);
       };break;
     }
   }
 }
 
 
-void rtc_sync_check(){
-  static unsigned long next_check = millis();
+void nixie_update_check(){
+  static unsigned long last_updated = 0;
   
-  if(next_check<=millis()){
-    next_check += _CONFIG_RTC_SYNC_INTERVAL;
-    static unsigned long test = 0;
-    test += 1;
-    test %= 10;
+  if(millis()-last_updated > _CONFIG_NIXIE_UPDATE_INTERVAL){
+    last_updated = millis();
+
+    TimeElements timeinfo_local = {};
+    TimeKeeper.getLocalTime(timeinfo_local);
+
+    Serial.write("LOCAL: ");
+    Serial.write(timeStr(timeinfo_local));
+    Serial.write("\r\n");
+
+    Nixie.setNumber( ((unsigned long)timeinfo_local.Hour)*10000 + timeinfo_local.Minute*100 + timeinfo_local.Second );
+    Nixie.setDots( timeinfo_local.Second % 2 );
   }
 }
+
+//// SETUP ///////////////////////////////////////////////////////////////////////////
 
 void setup(){
   Wire.begin();
   SPI.begin(); 
   Nixie.begin();
-  Nixie.setACP(ALL, 30000, 100);
+  TimeKeeper.begin();
   GPSTime.begin(false,&Serial1); 
+
+  Nixie.setACP(ALL, 30000, 100);
 
   TimeKeeper.setDst(DST::USA);
   TimeKeeper.setTimeZone(-8);
@@ -125,7 +125,7 @@ void loop(){
   Nixie.update();
   
   gps_sync_check();
-  rtc_sync_check();
+  nixie_update_check();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

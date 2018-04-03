@@ -4,8 +4,15 @@
 TimeKeeperClass TimeKeeper;
 
 DST TimeKeeperClass::dst = DST::NONE;
-time_t TimeKeeperClass::epoch = 0;
 int8_t TimeKeeperClass::timezone = 0;
+
+
+uint8_t TimeKeeperClass::Int2Bcd( uint8_t val ) {
+	return ((val/10)<<4) + (val%10);
+}
+uint8_t TimeKeeperClass::Bcd2Int( uint8_t val ) {
+	return ((val>>4)*10) + (val&0x0F);
+}
 
 // sun(1), mon(2), tue(3), wed(4), thu(5), fri(6), sat(7)
 uint8_t TimeKeeperClass::getDayOfWeek( uint8_t day, uint8_t month, uint8_t year, uint8_t cent )
@@ -85,11 +92,16 @@ bool TimeKeeperClass::isDst( time_t utc, int8_t timezone, DST dst ) {
 	return false;
 }
 
+void TimeKeeperClass::begin( ) {
+	Wire.begin();
+}
+
 bool TimeKeeperClass::isDst( ) {
-	return isDst(epoch, timezone, dst);
+	return isDst(getEpoch(), timezone, dst);
 }
 
 void TimeKeeperClass::getLocalTime( TimeElements &tm ) {
+	time_t epoch = getEpoch( );
 	breakTime(epoch + timezone*3600 + (isDst(epoch, timezone, dst) ? 3600 : 0), tm);
 }
 void TimeKeeperClass::setTimeZone( int8_t timezone ) {
@@ -98,12 +110,52 @@ void TimeKeeperClass::setTimeZone( int8_t timezone ) {
 int8_t TimeKeeperClass::getTimeZone( ) {
 	return timezone;
 }
-time_t TimeKeeperClass::getEpoch( ) {
-	return epoch;
-}
 void TimeKeeperClass::setDst( DST dst ) {
 	TimeKeeperClass::dst = dst;
 }
+
+
 void TimeKeeperClass::setEpoch( time_t epoch ) {
-	TimeKeeperClass::epoch = epoch;
+	TimeElements tm;
+	breakTime(epoch, tm);
+	setUtc(tm);
+}
+
+time_t TimeKeeperClass::getEpoch( ) {
+	TimeElements tm;
+	getUtc(tm);
+	return makeTime(tm);
+}
+
+
+
+void TimeKeeperClass::setUtc( const TimeElements &tm ) {
+	Wire.beginTransmission(DS3231S_ADDRESS);
+	Wire.write(0);
+
+	Wire.write(Int2Bcd(tm.Second));
+	Wire.write(Int2Bcd(tm.Minute));
+	Wire.write(Int2Bcd(tm.Hour));
+	Wire.write(Int2Bcd(tm.Wday-1));
+	Wire.write(Int2Bcd(tm.Day));
+	Wire.write(Int2Bcd(tm.Month));
+	Wire.write(Int2Bcd(tm.Year%100));
+	Wire.endTransmission();
+}
+
+
+void TimeKeeperClass::getUtc( TimeElements &tm ) {
+	Wire.beginTransmission(DS3231S_ADDRESS);
+	Wire.write(0);
+	Wire.endTransmission();
+
+	Wire.requestFrom(DS3231S_ADDRESS, 7);
+
+	tm.Second = Bcd2Int(Wire.read() & 0x7f);
+	tm.Minute = Bcd2Int(Wire.read() & 0x7f);
+	tm.Hour = 	Bcd2Int(Wire.read() & 0x3f);
+	tm.Wday = 	Bcd2Int(Wire.read() & 0x07) + 1;
+	tm.Day = 	Bcd2Int(Wire.read() & 0x3f);
+	tm.Month = 	Bcd2Int(Wire.read() & 0x1f);
+	tm.Year = 	Bcd2Int(Wire.read() & 0xff);
 }
