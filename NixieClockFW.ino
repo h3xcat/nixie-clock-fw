@@ -7,7 +7,7 @@
 #define _CONFIG_NIXIE_UPDATE_INTERVAL 500*ONE_MILLISECOND
 
 #define _CONFIG_GPS_ENABLED 1 // Enables GPS synchronization on Mega boards
-#define _CONFIG_GPS_SYNC_INTERVAL 1*ONE_MINUTE
+#define _CONFIG_GPS_SYNC_INTERVAL 30*ONE_MINUTE
 
 #define _CONFIG_IR_ENABLED 1 // Enables IR remote functionality
 
@@ -22,7 +22,6 @@
 #endif
 
 #include <TimeLib.h>
-#include <SPI.h>
 #include <Wire.h>
 #include <ClickButton.h>
 #include <Tone.h>
@@ -91,15 +90,13 @@ void nixie_update_check() {
     TimeKeeper.getLocalTime(timeinfo_local);
 
     Nixie.setNumber( ((unsigned long)timeinfo_local.Hour)*10000 + timeinfo_local.Minute*100 + timeinfo_local.Second );
-    Nixie.setDots( timeinfo_local.Second % 2 );
+    Nixie.setDots( timeinfo_local.Second & 0x01 );
   }
 }
 
 //// SETUP ///////////////////////////////////////////////////////////////////////////
 
 void setup() {
-  Wire.begin();
-  SPI.begin(); 
   Nixie.begin();
   TimeKeeper.begin();
   #if _CONFIG_GPS_ENABLED

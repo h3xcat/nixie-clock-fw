@@ -9,3 +9,11 @@ Originally I wanted to modify the original firmware of NCS314, but I had hard ti
 # Disclaimer
 
 I cannot guarantee this will work with other hardware versions, and I would strongly advise you not to try. Using this firmware with other hardware version(other than HW2.0) might cause damage to the shield.
+
+# TODO
+
+* Menu(Buttons + IR Remote)
+* LED Control
+* Temperature
+* Alarm
+* Tone
