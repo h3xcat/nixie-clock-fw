@@ -1,31 +1,37 @@
-#include "Nixie.h"
+#include "Display.h"
+using NixieClock::DisplayClass;
+using NixieClock::DisplayACP;
 
-NixieClass Nixie;
+DisplayClass Display;
 
-unsigned long long NixieClass::data = 0;
-unsigned long long NixieClass::lastData = 0;
-unsigned long NixieClass::lastUpdated = 0;
+unsigned long long DisplayClass::data = 0;
+unsigned long long DisplayClass::lastData = 0;
+unsigned long DisplayClass::lastUpdated = 0;
 
-NixieACP NixieClass::acpMode = NONE;
-bool NixieClass::acpInProgress = 0;
-unsigned long NixieClass::acpCycleInterval = 0;
-unsigned long NixieClass::acpDigitInterval = 0;
-unsigned long NixieClass::nextAcpCycle = 0;
-unsigned long NixieClass::nextAcpDigit = 0;
-unsigned long NixieClass::acpCounter = 0;
+DisplayACP DisplayClass::acpMode = DisplayACP::NONE;
+bool DisplayClass::acpInProgress = 0;
+unsigned long DisplayClass::acpCycleInterval = 0;
+unsigned long DisplayClass::acpDigitInterval = 0;
+unsigned long DisplayClass::nextAcpCycle = 0;
+unsigned long DisplayClass::nextAcpDigit = 0;
+unsigned long DisplayClass::acpCounter = 0;
 
 
-void NixieClass::begin(){
+void DisplayClass::begin( ){
   pinMode(PIN_HV5122_OE, OUTPUT);
+  pinMode(PIN_LED_RED, OUTPUT);
+  pinMode(PIN_LED_GREEN, OUTPUT);
+  pinMode(PIN_LED_BLUE, OUTPUT);
+
   digitalWrite(PIN_HV5122_OE, LOW); 
 
   SPI.begin();
 }
-void NixieClass::update(){
+void DisplayClass::update( ){
   if(acpInProgress) {
     acp();
     return;
-  }else if(acpMode != NONE && nextAcpCycle <= millis()){
+  }else if(acpMode != DisplayACP::NONE && nextAcpCycle <= millis()){
     lastData = ~data;
     nextAcpCycle = millis() + acpCycleInterval;
     acpInProgress = true;
@@ -45,10 +51,10 @@ void NixieClass::update(){
   sendData();
 }
 
-void NixieClass::acp(){
+void DisplayClass::acp( ){
   unsigned long long oldData = data;
   switch(acpMode) {
-    case SINGLE1:
+    case DisplayACP::SINGLE1:
       if(nextAcpDigit <= millis()) {
         if(acpCounter>59) {
           acpCounter = 0;
@@ -63,7 +69,7 @@ void NixieClass::acp(){
       }
 
       break;
-    case SINGLE2:
+    case DisplayACP::SINGLE2:
       if(nextAcpDigit <= millis()) {
         nextAcpDigit += acpDigitInterval;
 
@@ -84,7 +90,7 @@ void NixieClass::acp(){
       }
 
       break;
-    case ALL: 
+    case DisplayACP::ALL: 
       if(nextAcpDigit <= millis()) {
         if(acpCounter>9) {
           acpCounter = 0;
@@ -103,7 +109,7 @@ void NixieClass::acp(){
   data = oldData;
 }
 
-void NixieClass::sendData() {
+void DisplayClass::sendData( ){
   static SPISettings spiSettings = SPISettings(4e6, MSBFIRST, SPI_MODE2);
 
   byte * dataArray = ((byte *)(&data));
@@ -118,13 +124,13 @@ void NixieClass::sendData() {
   digitalWrite(PIN_HV5122_OE, HIGH);
 }
 
-void NixieClass::setDigitsStr(const char * digitsStr){
+void DisplayClass::setDigitsStr( const char * digitsStr ){
   static byte digits[6];
   for(int i = 0; i<6;++i)
-    digits[i] = (digitsStr[i]>=0x30 && digitsStr[i]<=0x39) ? digitsStr[i] - 0x30 : 0xFF;
+    digits[i] = (digitsStr[i]>=0x30 && digitsStr[i]<=0x39) ? (digitsStr[i] - 0x30) : 0xFF;
   setDigits(digits);
 }
-void NixieClass::setDigit(byte digit, byte val){
+void DisplayClass::setDigit( byte digit, byte val ) {
   switch(digit) {
     case 0:
       data &= ~(0x3FFull);
@@ -158,7 +164,7 @@ void NixieClass::setDigit(byte digit, byte val){
       break;
   }
 }
-void NixieClass::setDigits(byte * digits){
+void DisplayClass::setDigits( byte * digits ){
   data &= ~( (0x3FFull) | (0x3FFull<<10) | (0x3FFull<<20) | (0x3FFull<<32) | (0x3FFull<<42) | (0x3FFull<<52) );
 
   if(digits[0]<10)
@@ -174,7 +180,7 @@ void NixieClass::setDigits(byte * digits){
   if(digits[5]<10)
     data |= ( 1ULL << (digits[5]+52) );
 }
-void NixieClass::setNumber(unsigned long num, bool leadingZeros = true){
+void DisplayClass::setNumber( unsigned long num, bool leadingZeros = true ){
   static byte digits[6] = {0xFF};
 
   for(int i = 5; i>=0;--i){
@@ -189,22 +195,28 @@ void NixieClass::setNumber(unsigned long num, bool leadingZeros = true){
     setDigits(digits);
   }
 }
-void NixieClass::setDots(bool leftLower, bool leftUpper, bool rightLower, bool rightUpper){
+void DisplayClass::setDots( bool leftLower, bool leftUpper, bool rightLower, bool rightUpper ){
   data &= ~( (1ull << 30) | (1ull << 31) | (1ull<<62) | (1ull<<63) );
   data |= ((unsigned long long)leftLower << 30) 
     | ((unsigned long long)leftUpper << 31) 
     | ((unsigned long long)rightUpper << 62) 
     | ((unsigned long long)rightLower << 63);
 }
-void NixieClass::setDots(bool left, bool right){
+void DisplayClass::setDots( bool left, bool right ){
   setDots(left, left, right, right);
 }
-void NixieClass::setDots(bool on){
+void DisplayClass::setDots( bool on ){
   setDots(on,on,on,on);
 }
 
-void NixieClass::setACP( NixieACP mode, unsigned long cycleInterval = 60000, unsigned long digitInterval = 100 ) {
+void DisplayClass::setACP( DisplayACP mode, unsigned long cycleInterval = 60000, unsigned long digitInterval = 100 ){
   acpMode = mode;
   acpCycleInterval = cycleInterval;
   acpDigitInterval = digitInterval;
+}
+
+void DisplayClass::setLed( uint8_t red, uint8_t green, uint8_t blue ) {
+  analogWrite(PIN_LED_RED, red);
+  analogWrite(PIN_LED_GREEN, green);
+  analogWrite(PIN_LED_BLUE, blue);
 }

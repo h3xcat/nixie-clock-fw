@@ -27,12 +27,17 @@
 #include <EEPROM.h>
 #include <OneWire.h>
 
-#include "Nixie.h"
+#include "Display.h"
 #include "TimeKeeper.h"
 
 #if _CONFIG_GPS_ENABLED
   #include "GPSTime.h"
 #endif
+
+using NixieClock::Display;
+using NixieClock::DisplayACP;
+
+//////////////////////////////////////////////////////////////////////////////////////
 
 char * timeStr( const TimeElements &tm ) {
   char s_day[10];
@@ -79,7 +84,7 @@ void gps_sync_check() {
 }
 #endif
 
-void nixie_update_check() {
+void display_update_check() {
   static unsigned long last_updated = 0;
   
   if(millis()-last_updated > _CONFIG_NIXIE_UPDATE_INTERVAL){
@@ -88,21 +93,28 @@ void nixie_update_check() {
     TimeElements timeinfo_local = {};
     TimeKeeper.getLocalTime(timeinfo_local);
 
-    Nixie.setNumber( ((unsigned long)timeinfo_local.Hour)*10000 + timeinfo_local.Minute*100 + timeinfo_local.Second );
-    Nixie.setDots( timeinfo_local.Second & 0x01 );
+    Display.setNumber( ((unsigned long)timeinfo_local.Hour)*10000 + timeinfo_local.Minute*100 + timeinfo_local.Second );
+    if( timeinfo_local.Second & 0x01 ){
+      Display.setDots(true);
+      //Display.setLed(10,1,0);
+    }else{
+      Display.setDots(false);
+      //Display.setLed(0,0,0);
+    }
+    
   }
 }
 
 //// SETUP ///////////////////////////////////////////////////////////////////////////
 
 void setup() {
-  Nixie.begin();
+  Display.begin();
   TimeKeeper.begin();
   #if _CONFIG_GPS_ENABLED
     GPSTime.begin(false,&Serial1);
   #endif 
 
-  Nixie.setACP(ALL, 30000, 100);
+  Display.setACP(DisplayACP::ALL, 30000, 100);
 
   TimeKeeper.setDst(DST::USA);
   TimeKeeper.setTimeZone(-8);
@@ -114,14 +126,14 @@ void setup() {
 //// LOOP ////////////////////////////////////////////////////////////////////////////
 
 void loop() {
-  Nixie.update();
+  Display.update();
 
   #if _CONFIG_GPS_ENABLED
     GPSTime.update();
     gps_sync_check();
   #endif
   
-  nixie_update_check();
+  display_update_check();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////

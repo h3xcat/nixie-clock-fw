@@ -115,10 +115,10 @@ void GPSTimeClass::processMessage( const char * msg, unsigned long msgTime ){
       Serial.println("GPSTime: Corrupt RMC message!");
       return;
     }
-    
+
     // Check message status
     char rmc_status[2];
-    getMessageArg(rmc_status, msg, 1 );
+    getMessageArg(rmc_status, msg, 1);
     if(*rmc_status != 'A') {
       //Serial.println("GPSTime: Received void RMC message!"); // Means no signal (can be caused by weather and such)
       return;
@@ -126,13 +126,13 @@ void GPSTimeClass::processMessage( const char * msg, unsigned long msgTime ){
       
     // Get Time
     char str_time[16];
-    getMessageArg(str_time, msg, 0 );
+    getMessageArg(str_time, msg, 0);
     if(*str_time == 0)
       return;
     
     // Get Date
     char date_time[16];
-    getMessageArg(date_time, msg, 8 );
+    getMessageArg(date_time, msg, 8);
     if(*date_time == 0)
       return;
     
