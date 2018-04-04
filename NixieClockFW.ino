@@ -22,7 +22,6 @@
 #endif
 
 #include <TimeLib.h>
-#include <Wire.h>
 #include <ClickButton.h>
 #include <Tone.h>
 #include <EEPROM.h>
@@ -100,7 +99,7 @@ void setup() {
   Nixie.begin();
   TimeKeeper.begin();
   #if _CONFIG_GPS_ENABLED
-  GPSTime.begin(false,&Serial1);
+    GPSTime.begin(false,&Serial1);
   #endif 
 
   Nixie.setACP(ALL, 30000, 100);
@@ -115,15 +114,13 @@ void setup() {
 //// LOOP ////////////////////////////////////////////////////////////////////////////
 
 void loop() {
-  #if _CONFIG_GPS_ENABLED
-  GPSTime.update();
-  #endif
-
   Nixie.update();
-  
+
   #if _CONFIG_GPS_ENABLED
-  gps_sync_check();
+    GPSTime.update();
+    gps_sync_check();
   #endif
+  
   nixie_update_check();
 }
 
