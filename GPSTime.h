@@ -16,6 +16,8 @@ class GPSTimeClass
   private:
     static bool autoUpdate;
 
+    static bool connected;
+
     static tmElements_t utcTime;
 
     static unsigned long timeUpdated;
@@ -60,6 +62,7 @@ class GPSTimeClass
     static unsigned short int getYear();
     static const tmElements_t* getUtcTime();
     static void getUtcTime( tmElements_t* tm );
+    static bool isConnected();
 
 };
 

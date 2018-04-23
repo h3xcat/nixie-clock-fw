@@ -135,32 +135,32 @@ void DisplayClass::setDigit( byte digit, byte val ) {
     case 0:
       data &= ~(0x3FFull);
       if(val<10)
-        data |= ( 1ULL << (val+0) );
+        data |= ( 1ull << (val+0) );
       break;
     case 1:
       data &= ~(0x3FFull<<10);
       if(val<10)
-        data |= ( 1ULL << (val+10) );
+        data |= ( 1ull << (val+10) );
       break;
     case 2:
       data &= ~(0x3FFull<<20);
       if(val<10)
-        data |= ( 1ULL << (val+20) );
+        data |= ( 1ull << (val+20) );
       break;
     case 3:
       data &= ~(0x3FFull<<32);
       if(val<10)
-        data |= ( 1ULL << (val+32) );
+        data |= ( 1ull << (val+32) );
       break;
     case 4:
       data &= ~(0x3FFull<<42);
       if(val<10)
-        data |= ( 1ULL << (val+42) );
+        data |= ( 1ull << (val+42) );
       break;
     case 5:
       data &= ~(0x3FFull<<52);
       if(val<10)
-        data |= ( 1ULL << (val+52) );
+        data |= ( 1ull << (val+52) );
       break;
   }
 }
@@ -168,17 +168,17 @@ void DisplayClass::setDigits( byte * digits ){
   data &= ~( (0x3FFull) | (0x3FFull<<10) | (0x3FFull<<20) | (0x3FFull<<32) | (0x3FFull<<42) | (0x3FFull<<52) );
 
   if(digits[0]<10)
-    data |= ( 1ULL << (digits[0]+0) );
+    data |= ( 1ull << (digits[0]+0) );
   if(digits[1]<10)
-    data |= ( 1ULL << (digits[1]+10) );
+    data |= ( 1ull << (digits[1]+10) );
   if(digits[2]<10)
-    data |= ( 1ULL << (digits[2]+20) );
+    data |= ( 1ull << (digits[2]+20) );
   if(digits[3]<10)
-    data |= ( 1ULL << (digits[3]+32) );
+    data |= ( 1ull << (digits[3]+32) );
   if(digits[4]<10)
-    data |= ( 1ULL << (digits[4]+42) );
+    data |= ( 1ull << (digits[4]+42) );
   if(digits[5]<10)
-    data |= ( 1ULL << (digits[5]+52) );
+    data |= ( 1ull << (digits[5]+52) );
 }
 void DisplayClass::setNumber( unsigned long num, bool leadingZeros = true ){
   static byte digits[6] = {0xFF};

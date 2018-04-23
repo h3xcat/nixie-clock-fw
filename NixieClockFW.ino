@@ -15,6 +15,8 @@
 // END OF CONFIG /////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////
 
+#define PIN_BUZZER 2
+
 #if !defined(__AVR_ATmega1280__) && !defined(__AVR_ATmega2560__)
   // These are not supported on non-mega boards :(
   #define _CONFIG_GPS_ENABLED 0
@@ -22,13 +24,11 @@
 #endif
 
 #include <TimeLib.h>
-#include <ClickButton.h>
 #include <Tone.h>
-#include <EEPROM.h>
-#include <OneWire.h>
 
 #include "Display.h"
 #include "TimeKeeper.h"
+#include "RTTTL.h"
 
 #if _CONFIG_GPS_ENABLED
   #include "GPSTime.h"
@@ -101,13 +101,16 @@ void display_update_check() {
       Display.setDots(false);
       //Display.setLed(0,0,0);
     }
-    
   }
 }
 
 //// SETUP ///////////////////////////////////////////////////////////////////////////
-
+RTTTL alarmMusic;
 void setup() {
+  alarmMusic.begin(PIN_BUZZER);
+  alarmMusic.load("HauntHouse: d=4,o=5,b=108: 2a4, 2e, 2d#, 2b4, 2a4, 2c, 2d, 2a#4, 2e., e, 1f4, 1a4, 1d#, 2e., d, 2c., b4, 1a4, 1p, 2a4, 2e, 2d#, 2b4, 2a4, 2c, 2d, 2a#4, 2e., e, 1f4, 1a4, 1d#, 2e., d, 2c., b4, 1a4");
+  alarmMusic.play();
+
   Display.begin();
   TimeKeeper.begin();
   #if _CONFIG_GPS_ENABLED
@@ -124,7 +127,6 @@ void setup() {
 }
 
 //// LOOP ////////////////////////////////////////////////////////////////////////////
-
 void loop() {
   Display.update();
 

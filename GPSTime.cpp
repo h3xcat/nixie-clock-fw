@@ -17,6 +17,7 @@ unsigned long GPSTimeClass::msgTime = 0;
 byte GPSTimeClass::scanCurSetting = 0;
 bool GPSTimeClass::scanNextSetting = false;
 unsigned long GPSTimeClass::scanTime = 0;
+bool GPSTimeClass::connected = false;
 
 
 
@@ -110,6 +111,8 @@ int GPSTimeClass::getDayOfWeek( int day, int month, int year, int cent ){
 
 void GPSTimeClass::processMessage( const char * msg, unsigned long msgTime ){
   if(*(msg+3)=='R' && *(msg+4)=='M' && *(msg+5)=='C'){ // We're mainly interested in time and date, which RMC contains
+    connected = true;
+
     if(!isMessageValid( msg )){ // Making sure our message is not corrupt
       Serial.println(msg);
       Serial.println("GPSTime: Corrupt RMC message!");
@@ -278,4 +281,8 @@ void GPSTimeClass::getUtcTime( tmElements_t* tm ){
   tm->Month = utcTime.Month;
   tm->Year = utcTime.Year;
   tm->Wday = utcTime.Wday;
+}
+
+bool GPSTimeClass::isConnected(){
+  return connected;
 }
