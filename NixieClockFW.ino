@@ -26,6 +26,7 @@
 #include <TimeLib.h>
 #include <Tone.h>
 
+#include "Menu.h"
 #include "Display.h"
 #include "TimeKeeper.h"
 #include "RTTTL.h"
@@ -36,6 +37,8 @@
 
 using NixieClock::Display;
 using NixieClock::DisplayACP;
+using NixieClock::Menu;
+
 
 //////////////////////////////////////////////////////////////////////////////////////
 
@@ -107,9 +110,8 @@ void display_update_check() {
 //// SETUP ///////////////////////////////////////////////////////////////////////////
 RTTTL alarmMusic;
 void setup() {
-  alarmMusic.begin(PIN_BUZZER);
-  alarmMusic.load("HauntHouse: d=4,o=5,b=108: 2a4, 2e, 2d#, 2b4, 2a4, 2c, 2d, 2a#4, 2e., e, 1f4, 1a4, 1d#, 2e., d, 2c., b4, 1a4, 1p, 2a4, 2e, 2d#, 2b4, 2a4, 2c, 2d, 2a#4, 2e., e, 1f4, 1a4, 1d#, 2e., d, 2c., b4, 1a4");
-  alarmMusic.play();
+  Serial.begin(230400);
+  Serial.write("H3xCat's NixieClock Firmware\r\n");
 
   Display.begin();
   TimeKeeper.begin();
@@ -122,13 +124,20 @@ void setup() {
   TimeKeeper.setDst(DST::USA);
   TimeKeeper.setTimeZone(-8);
   
-  Serial.begin(230400);
-  Serial.write("H3xCat's NixieClock Firmware\r\n");
+
+
+  alarmMusic.begin(PIN_BUZZER);
+  alarmMusic.load("Zorba:d=16,o=5,b=125:16c#6,2d6,2p,c#6,2d6,2p,32e6,32d6,32c#6,2d6,2p,c#6,2d6,2p,b,2c6,2p,32d6,32c6,32b,2c6,2p,a#,2b,4p,8p,32c6,32b,32a,32g,32b,2a,2p,32a,32g,32f#,32a,1g,1p,8c#6,8d6,8d6,8d6,8d6,8d6,8d6,8d6,8c#6,8d6,8d6,8d6,8d6,8d6,e6,d6,c#6,e6,8c#6,8d6,8d6,8d6,8d6,8d6,8d6,8d6,8c#6,8d6,8d6,8d6,8d6,8d6,e6,d6,c#6,e6,8b,8c6,8c6,8c6,8c6,8c6,8c6,8c6,8b,8c6,8c6,8c6,8c6,8c6,d6,c6,b5,d6,8b,8c6,8c6,8c6,8c6,8c6,8c6,8c6,8b,8c6,8c6,8c6,8c6,8c6,8c6,8c6,c#6.,d6.,d6.,d6.,d6.,d6.,d6.,d6.,c#6.,d6.,d6.,d6.,d6.,d6.,32e6.,32d6.,32c#6.,32e6.,c#6.,d6.,d6.,d6.,d6.,d6.,d6.,d6.,c#6.,d6.,d6.,d6.,d6.,d6.,32e6.,32d6.,32c#6.,32e6.,b.,c6.,c6.,c6.,c6.,c6.,c6.,c6.,b.,c6.,c6.,c6.,c6.,c6.,32d6.,32c6.,32b5.,32d6.,b.,c6.,c6.,c6.,c6.,c6.,c6.,c6.,b.,c6.,c6.,c6.,c6.,c6.,c6.,c6.");
+  //alarmMusic.play();
+
+  Menu.begin();
 }
 
 //// LOOP ////////////////////////////////////////////////////////////////////////////
 void loop() {
   Display.update();
+  Menu.update();
+  alarmMusic.update();
 
   #if _CONFIG_GPS_ENABLED
     GPSTime.update();

@@ -3,30 +3,33 @@
 
 #include <Tone.h>
 
-struct RTTLTone {
-	unsigned char duration;
-	unsigned char note[3];
-	unsigned char scale;
-	unsigned char special_duration;
-};
 
 class RTTTL {
   private:
     Tone buzzer;
 
   	char name[16];
-    int defaultDuration;
-  	int defaultOctave;
-  	int bpm;
+    uint16_t defaultDuration;
+  	uint8_t defaultOctave;
+  	uint16_t beatsPerMinute;
+
+    uint16_t nextNoteStr;
+    uint32_t notePlayed;
+    uint32_t noteDuration;
+
+    bool playing;
 
 
-    void parseControls( const char * controls );
-    void parseTones( const char * tones );
+    const char * commandsStart;
+
     void stripSpaces( char * str );
-
+    void parseControls( const char * strControls );
+    const char * parseControl( const char * strControls );
+    const char * parseCommand(const char * strCommands);
+    const char * parseNote( const char * strNote );
   public:
     void begin( uint8_t buzzerPin );
-    void load( const char * ringtone );
+    void load( char * ringtone );
 
     void update();
     void play();

@@ -1,12 +1,6 @@
 #include "RTTTL.h"
 #include "Arduino.h"
 
-int defaultToneDuration = 4;
-int defaultToneScale = 6;
-int defaultToneBPM = 63;
-
-#define NOTE_SHARP 0x80
-
 void RTTTL::stripSpaces( char * str) {
   char * c = str;
   char * p = str;
@@ -23,141 +17,190 @@ void RTTTL::stripSpaces( char * str) {
 }
 
 void RTTTL::begin( uint8_t buzzerPin ) {
+  playing = false;
   buzzer.begin( buzzerPin );
 }
-void RTTTL::play( ) {
 
+void RTTTL::play( ) {
+  playing = true;
+  nextNoteStr = commandsStart;
+  notePlayed = millis();
+  noteDuration = 0;
 }
+
+void RTTTL::update( ) {
+  if(!playing)
+    return;
+  if(millis() - notePlayed < noteDuration )
+    return;
+  
+  if(nextNoteStr == 0) {
+    playing = false;
+    return;
+  }
+
+  nextNoteStr = parseCommand(nextNoteStr);
+}
+
+const char * RTTTL::parseControl( const char * strControls ) {
+  const char * cursor = strControls;
+
+  char controlName;
+  int controlValue;
+
+  while(isspace(*cursor)) ++cursor;
+
+  controlName = *(cursor++);
+
+  while(isspace(*cursor)) ++cursor;
+  
+  if(*(cursor++) != '=')
+    return 0;
+
+  while(isspace(*cursor)) ++cursor;
+
+  switch(controlName) {
+    case 'd':
+      defaultDuration = atoi(cursor);
+    break;
+    case 'o':
+      defaultOctave = atoi(cursor);
+    break;
+    case 'b':
+      beatsPerMinute = atoi(cursor);
+    break;
+  }
+
+  while(*cursor != ',' && *cursor != ':' && *cursor != '\0') ++cursor;
+
+  return cursor;
+}
+
 
 void RTTTL::parseControls( const char * strControls ) {
-  if(strncmp(strControls, "d=", 2) == 0) {
-    defaultToneDuration = atoi(strControls+2);
-  }else if(strncmp(strControls, "o=", 2) == 0) {
-    defaultToneScale = atoi(strControls+2);
-  }else if(strncmp(strControls, "b=", 2) == 0) {
-    defaultToneBPM = atoi(strControls+2);
-  }
-  
-  const char * nextControl = strchr(strControls,',');
-  
-  if(nextControl != 0) 
-    parseControls(nextControl+1);
+  const char * cursor;
+  cursor = parseControl( strControls );
+  if(*cursor == ',') 
+    parseControls(cursor+1);
 }
 
-void RTTTL::parseTones( const char * strTones ) {
-  const char * cursor = strTones;
+const char * RTTTL::parseNote( const char * strNote ) {
+  int noteOctave = defaultOctave;
   
-  int toneDuration = defaultToneDuration;
-  int toneScale = defaultToneScale;
-  bool toneSpecialDuration = false;
+  const char * cursor = strNote;
+
+  while(isspace(*cursor)) ++cursor;
+
+  // Get note duration
+  noteDuration = ((60L * 1000L / beatsPerMinute) * 4L)/(isdigit(*cursor) ? atol(cursor) : defaultDuration);
   
-  
-  // Check if tone duration specified
-  if(isdigit(*cursor))
-    toneDuration = atoi(cursor);
-  
-  // Skip the numbers
-  while(isdigit(*cursor)) ++cursor; 
+  // Skip the numbers and spaces
+  while(isdigit(*cursor) || isspace(*cursor)) ++cursor; 
   
   // Check for special duration identifier
   if(*cursor == '.') {
-    toneSpecialDuration = true;
+    noteDuration += noteDuration/2;
     ++cursor;
   }
   
-  // Next should go a note, followed by sharp symbol if present.
-  unsigned char note = *(cursor++);
+  while(isspace(*cursor)) ++cursor;
+
+  // Next should go a letter note, followed by sharp symbol if present.
+  //                                  A  B  C  D  E  F  G  H
+  const int8_t noteLetterToKey[8] = { 1, 3,-8,-6,-4,-3,-1, 3};
+
+  unsigned char noteLetter = toupper( *(cursor++) );
+
+  int16_t noteId = (noteLetter >= 'A' && noteLetter <= 'H') ? noteLetterToKey[noteLetter-'A'] : 0;
+
+  while(isspace(*cursor)) ++cursor;
+
   if(*cursor == '#'){
-    note |= NOTE_SHARP; // We signify sharp by using highest bit
+    noteId += 1;
     ++cursor;
+
+    while(isspace(*cursor)) ++cursor;
   }
-  
-  switch(note) {
-    case 'P':
-    break;
-    case 'C':
-    break;
-    case 'C'|NOTE_SHARP:
-    break;
-    case 'D':
-    break;
-    case 'D'|NOTE_SHARP:
-    break;
-    case 'E':
-    break;
-    case 'F':
-    break;
-    case 'F'|NOTE_SHARP:
-    break;
-    case 'G':
-    break;
-    case 'G'|NOTE_SHARP:
-    break;
-    case 'A':
-    break;
-    case 'A'|NOTE_SHARP:
-    break;
-    case 'B':
-    break;
-  }
-  
+
   // Again, check for special duration identifier
   if(*cursor == '.') {
-    toneSpecialDuration = true;
+    noteDuration += noteDuration/2;
     ++cursor;
+
+    while(isspace(*cursor)) ++cursor;
   }
   
-  // Get tone scale
+  // Get note scale
   if(isdigit(*cursor)) {
-    toneScale = atoi(cursor);
+    noteId += 12*atoi(cursor);
+    while(isdigit(*cursor)) ++cursor;
+  }else{
+    noteId += 12*defaultOctave;
   }
   
-  // Skip scale numbers
-  while(isdigit(*cursor))
-    ++cursor;
+  // Skip scale numbers and spaces
+  while(isspace(*cursor)) ++cursor;
   
   // Last check for special duration identifier
   if(*cursor == '.') {
-    toneSpecialDuration = true;
+    noteDuration += noteDuration/2;
     ++cursor;
+
+    while(isspace(*cursor)) ++cursor;
   }
-  
-  // Just a sanity check, skip to delimiter or null byte
+
+  notePlayed = millis();
+
+  if(noteLetter != 'P')
+    buzzer.play( powf(1.05946309, noteId-49)*440 + 0.5,noteDuration );
+  else
+    buzzer.stop();
+
+
+  Serial.write(strNote);
+  Serial.write("\r\n");
+  Serial.print((uint16_t)(powf(1.05946309, noteId-49)*440 + 0.5), DEC);
+  Serial.print(' ');
+  Serial.write(noteLetter);
+  Serial.print(' ');
+  Serial.print(noteId, DEC);
+  Serial.write("\r\n");
+
+  // Skip to delimiter or null byte
   while(*cursor != ',' && *cursor != '\0')
     ++cursor;
   
-  // If string contains more tones, parse them next
-  if(*cursor == ',')
-    parseTones(cursor + 1);
+  // If string contains more notes, parse them next
+  return (*cursor) ? cursor+1 : 0;  
 }
 
-void RTTTL::load(const char * songStr) {
-  char strName[32];
-  char strControls[64];
-  char strTones[256];
-  
-  // Seperate the RTTTL into 3 parts: name, controls, and tones
-  
-  const char * nameEnd = strchr(songStr, ':');
-  const char * controlsEnd = strchr(nameEnd+1, ':');
-  const char * toneEnd = strchr(controlsEnd+1, '\0');
-  
-  int nameLen = nameEnd-songStr;
-  int controlsLen = controlsEnd-nameEnd-1;
-  int tonesLen = toneEnd-controlsEnd-1;
-  
-  strncpy( strName, songStr, nameLen );
-  strncpy( strControls, nameEnd+1, controlsLen );
-  strncpy( strTones, controlsEnd+1, tonesLen );
-  
-  strName[nameLen] = 0;
-  strControls[controlsLen] = 0;
-  strTones[tonesLen] = 0;
-  // Strip spaces
-  stripSpaces(strControls);
-  stripSpaces(strTones);
+const char * RTTTL::parseCommand(const char * strCommands) {
 
+  const char * cursor = strCommands;
+
+  while(*cursor != '=' && *cursor != ',' && *cursor != '\0')
+    ++cursor;
+
+  if(*cursor == '=') {
+    cursor = parseControl( strCommands );
+
+    return (*cursor == ',') ? parseCommand( cursor+1 ) : 0;
+  } else {
+    return parseNote( strCommands );
+  }
+}
+
+void RTTTL::load(char * songStr) {
+  defaultDuration = 4;
+  defaultOctave = 6;
+  beatsPerMinute = 63;
+
+  // Strip spaces
+  stripSpaces(songStr);
+
+  const char * controlsStart = strchr(songStr, ':')+1;
+  commandsStart = strchr(controlsStart, ':')+1;
+  
   // Parse the controls and then notes
-  parseControls(strControls);
-  parseTones(strTones);
+  parseControls(controlsStart);
 }

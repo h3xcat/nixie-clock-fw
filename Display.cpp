@@ -199,8 +199,8 @@ void DisplayClass::setDots( bool leftLower, bool leftUpper, bool rightLower, boo
   data &= ~( (1ull << 30) | (1ull << 31) | (1ull<<62) | (1ull<<63) );
   data |= ((unsigned long long)leftLower << 30) 
     | ((unsigned long long)leftUpper << 31) 
-    | ((unsigned long long)rightUpper << 62) 
-    | ((unsigned long long)rightLower << 63);
+    | ((unsigned long long)rightLower << 62) 
+    | ((unsigned long long)rightUpper << 63);
 }
 void DisplayClass::setDots( bool left, bool right ){
   setDots(left, left, right, right);
