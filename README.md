@@ -1,4 +1,4 @@
-:warning::warning:**This project is currently work-in-progress and have minimal functionality of a clock!**:warning::warning:
+:warning::warning:**This project is not complete, though does function as a clock!**:warning::warning:
 
 # NixieClockFW
 
@@ -13,7 +13,15 @@ Originally I wanted to modify the [original firmware of NCS314](https://github.c
 
 # Disclaimer
 
-I cannot guarantee this will work with other hardware versions, and I would strongly advise you not to try. Using this firmware with other hardware version(other than HW2.0) might cause damage to the shield.
+I cannot guarantee this will work with other hardware versions, and I would strongly advise you not to try. Using this firmware with other hardware versions(other than HW2.0) might cause damage to the shield or the arduino.
+
+# Current Features
+
+* Timezones with DST (DST can be set to None, EU, or US modes)
+* GPS synchronization (detects baud rate by itself, should be compatible with most GPS modules using NMEA protocol)
+* Anti cathode poisoning (Various modes and customizable intervals)
+* Display Interface (Gives easy control over the nixie tubes)
+* RTTL player (Functional but not incorporated)
 
 # TODO
 
@@ -21,4 +29,3 @@ I cannot guarantee this will work with other hardware versions, and I would stro
 * LED Control
 * Temperature
 * Alarm
-* Tone
