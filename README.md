@@ -1,5 +1,3 @@
-:warning::warning:**This project is not complete, though does function as a clock!**:warning::warning:
-
 # NixieClockFW
 
 Custom firmware for NCS314 **HW2.0**. The goal of this project is to make the firmware easy to read, and easy to customize.
