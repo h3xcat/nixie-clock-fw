@@ -15,11 +15,11 @@ I cannot guarantee this will work with other hardware versions, and I would stro
 
 # Current Features
 
-* Timezones with DST (DST can be set to None, EU, or US modes)
-* GPS synchronization (detects baud rate by itself, should be compatible with most GPS modules using NMEA protocol)
-* Anti cathode poisoning (Various modes and customizable intervals)
-* Display Interface (Gives easy control over the nixie tubes)
-* RTTL player (Functional but not incorporated)
+* **Timezones with DST:** DST can be set to None, EU, or US modes.
+* **GPS synchronization:** Firmware is able to detect the baud rate by itself, should be compatible with most GPS modules using NMEA protocol over serial.
+* **Anti cathode poisoning (ACD):** The ACD include various modes with customizable intervals)
+* **Display Interface:** Provides easy control over the nixie tubes.
+* **RTTL player:** The RTTL player itself is completed, but needs Alarm implementation before its usable.
 
 # TODO
 
