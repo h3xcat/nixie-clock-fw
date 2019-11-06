@@ -113,12 +113,11 @@ void GPSTimeClass::processMessage( const char * msg, unsigned long msgTime ){
   if(*(msg+3)=='R' && *(msg+4)=='M' && *(msg+5)=='C'){ // We're mainly interested in time and date, which RMC contains
     connected = true;
 
+    Serial.println(msg);
     if(!isMessageValid( msg )){ // Making sure our message is not corrupt
-      Serial.println(msg);
       Serial.println("GPSTime: Corrupt RMC message!");
       return;
     }
-
     // Check message status
     char rmc_status[2];
     getMessageArg(rmc_status, msg, 1);
@@ -132,6 +131,16 @@ void GPSTimeClass::processMessage( const char * msg, unsigned long msgTime ){
     getMessageArg(str_time, msg, 0);
     if(*str_time == 0)
       return;
+
+    char * str_time_decimal = str_time;
+    while(*str_time_decimal != 0 && *str_time_decimal != '.')
+      ++str_time_decimal;
+      
+    if(*str_time_decimal == '.'){
+      *str_time_decimal = 0;
+      ++str_time_decimal;
+    }
+      
     
     // Get Date
     char date_time[16];
@@ -139,11 +148,10 @@ void GPSTimeClass::processMessage( const char * msg, unsigned long msgTime ){
     if(*date_time == 0)
       return;
     
-    double timef = atof(str_time);
-    long time = timef;
+    long time = atoi(str_time);
     long date = atol(date_time);
 
-    int mil = (timef-time)*1000;
+    int mil = atoi(str_time_decimal);
 
     utcTime.Second = (time%100);
     utcTime.Minute = ((time / 100)%100);
@@ -154,6 +162,7 @@ void GPSTimeClass::processMessage( const char * msg, unsigned long msgTime ){
     utcTime.Wday = getDayOfWeek( utcTime.Day, utcTime.Month, utcTime.Year - 30, 20 );
     
     timeUpdated = msgTime-mil;
+
 
     status = FINISHED;
 
