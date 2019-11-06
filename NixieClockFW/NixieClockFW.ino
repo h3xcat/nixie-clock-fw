@@ -7,7 +7,7 @@
 #define _CONFIG_NIXIE_UPDATE_INTERVAL 500*ONE_MILLISECOND
 
 #define _CONFIG_GPS_ENABLED 1 // Enables GPS synchronization on Mega boards
-#define _CONFIG_GPS_SYNC_INTERVAL 2*ONE_SECOND
+#define _CONFIG_GPS_SYNC_INTERVAL 30*ONE_MINUTE
 
 #define _CONFIG_IR_ENABLED 1 // Enables IR remote functionality
 
