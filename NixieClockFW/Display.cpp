@@ -99,7 +99,18 @@ void DisplayClass::acp( ){
         }
 
         nextAcpDigit += acpDigitInterval;
-        setNumber(acpCounter*111111ull);
+        
+        int c = acpCounter;
+        
+        setNumber(
+          ((c+0)%10) * 100000ull + 
+          ((c+3)%10) * 10000ull + 
+          ((c+6)%10) * 1000ull + 
+          ((c+9)%10) * 100ull + 
+          ((c+2)%10) * 10ull + 
+          ((c+5)%10) * 1ull
+        );
+        
         sendData();
         ++acpCounter;
       }

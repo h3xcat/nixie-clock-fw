@@ -122,7 +122,7 @@ void setup() {
   GPSTime.begin(false, &Serial1);
 #endif
 
-  Display.setACP(DisplayACP::ALL, 30000, 100);
+  Display.setACP(DisplayACP::ALL, 30000, 500);
 
   TimeKeeper.setDst(DST::USA);
   TimeKeeper.setTimeZone(-8);
