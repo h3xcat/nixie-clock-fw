@@ -127,7 +127,7 @@ void GPSTimeClass::processMessage( const char * msg, unsigned long msgTime ){
     }
       
     // Get Time
-    char str_time[16];
+    char str_time[16] = {0};
     getMessageArg(str_time, msg, 0);
     if(*str_time == 0)
       return;
@@ -140,7 +140,13 @@ void GPSTimeClass::processMessage( const char * msg, unsigned long msgTime ){
       *str_time_decimal = 0;
       ++str_time_decimal;
     }
-      
+
+    for(size_t i = 0; i<3; ++i){
+      if(str_time_decimal[i] == 0){
+        str_time_decimal[i] = '0';
+      }
+    }
+    str_time_decimal[3] = 0;
     
     // Get Date
     char date_time[16];
@@ -148,11 +154,12 @@ void GPSTimeClass::processMessage( const char * msg, unsigned long msgTime ){
     if(*date_time == 0)
       return;
     
-    long time = atoi(str_time);
+    long time = atol(str_time);
     long date = atol(date_time);
 
     int mil = atoi(str_time_decimal);
-
+    
+    
     utcTime.Second = (time%100);
     utcTime.Minute = ((time / 100)%100);
     utcTime.Hour = (time / 10000);
