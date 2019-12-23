@@ -76,10 +76,10 @@ void gps_sync_check() {
           
           Serial.println(time_utc, DEC);
           Serial.println(latency, DEC);
+
+          delay(1000-(latency % 1000));
           
-          if (latency % 1000 >= 500)
-            ++time_utc;
-          time_utc += latency / 1000;
+          time_utc += (latency / 1000)+1;
 
           TimeKeeper.setEpoch(time_utc);
           
@@ -122,16 +122,16 @@ void setup() {
   GPSTime.begin(false, &Serial1);
 #endif
 
-  Display.setACP(DisplayACP::ALL, 30000, 500);
+  Display.setACP(DisplayACP::ALL, 60000, 500);
 
   TimeKeeper.setDst(DST::USA);
   TimeKeeper.setTimeZone(-8);
 
-
-
-  alarmMusic.begin(PIN_BUZZER);
-  alarmMusic.load("Zorba:d=16,o=5,b=125:16c#6,2d6,2p,c#6,2d6,2p,32e6,32d6,32c#6,2d6,2p,c#6,2d6,2p,b,2c6,2p,32d6,32c6,32b,2c6,2p,a#,2b,4p,8p,32c6,32b,32a,32g,32b,2a,2p,32a,32g,32f#,32a,1g,1p,8c#6,8d6,8d6,8d6,8d6,8d6,8d6,8d6,8c#6,8d6,8d6,8d6,8d6,8d6,e6,d6,c#6,e6,8c#6,8d6,8d6,8d6,8d6,8d6,8d6,8d6,8c#6,8d6,8d6,8d6,8d6,8d6,e6,d6,c#6,e6,8b,8c6,8c6,8c6,8c6,8c6,8c6,8c6,8b,8c6,8c6,8c6,8c6,8c6,d6,c6,b5,d6,8b,8c6,8c6,8c6,8c6,8c6,8c6,8c6,8b,8c6,8c6,8c6,8c6,8c6,8c6,8c6,c#6.,d6.,d6.,d6.,d6.,d6.,d6.,d6.,c#6.,d6.,d6.,d6.,d6.,d6.,32e6.,32d6.,32c#6.,32e6.,c#6.,d6.,d6.,d6.,d6.,d6.,d6.,d6.,c#6.,d6.,d6.,d6.,d6.,d6.,32e6.,32d6.,32c#6.,32e6.,b.,c6.,c6.,c6.,c6.,c6.,c6.,c6.,b.,c6.,c6.,c6.,c6.,c6.,32d6.,32c6.,32b5.,32d6.,b.,c6.,c6.,c6.,c6.,c6.,c6.,c6.,b.,c6.,c6.,c6.,c6.,c6.,c6.,c6.");
-  //alarmMusic.play();
+//
+//
+//  alarmMusic.begin(PIN_BUZZER);
+//  alarmMusic.load("korobyeyniki:d=4,o=5,b=e6,8b,8c6, 8d6,16e6,16d6,8c6,8b,a,8a,8c6,e6,8d6,8c6,b,8b,8c6,d6,e6,c6,a,2a,8p,d6,8f6,a6");
+//  alarmMusic.play();
 
   Menu.begin();
 }
