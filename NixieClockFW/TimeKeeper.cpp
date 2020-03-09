@@ -1,3 +1,6 @@
+#include <Time.h>
+#include <TimeLib.h>
+
 #include "TimeKeeper.h"
 #include <Arduino.h>
 
@@ -42,8 +45,8 @@ bool TimeKeeperClass::isDst( time_t utc, int8_t timezone, DST dst ) {
 				if (tm.Day < 8 ) return false;
 				if (tm.Day > 14) return true;
 
-				int secondSunday = 15-getDayOfWeek( 7, 3, (tm.Year-70)%100, (tm.Year-70)/100);
-
+				int secondSunday = 15-getDayOfWeek( 7, 3, (tm.Year+1970)%100, (tm.Year+1970)/100);
+        
 				if (tm.Day < secondSunday) return false;
 				if (tm.Day > secondSunday) return true;
 				
@@ -52,7 +55,7 @@ bool TimeKeeperClass::isDst( time_t utc, int8_t timezone, DST dst ) {
 			} else if (tm.Month == 11) {
 				if (tm.Day > 7) return false;
 
-				int firstSunday = 8-getDayOfWeek( 31, 10, (tm.Year-70)%100, (tm.Year-70)/100);
+				int firstSunday = 8-getDayOfWeek( 31, 10, (tm.Year+1970)%100, (tm.Year+1970)/100);
 
 				if (tm.Day < firstSunday) return true;
 				if (tm.Day > firstSunday) return false;
@@ -69,7 +72,7 @@ bool TimeKeeperClass::isDst( time_t utc, int8_t timezone, DST dst ) {
 			if (tm.Month == 3) {
 				if (tm.Day < 25) return false;
 				
-				int lastSunday = 32-getDayOfWeek(24, 3, (tm.Year-70)%100, (tm.Year-70)/100);
+				int lastSunday = 32-getDayOfWeek(24, 3, (tm.Year+1970)%100, (tm.Year+1970)/100);
 				
 				if (tm.Day < lastSunday) return false;
 				if (tm.Day > lastSunday) return true;
@@ -78,7 +81,7 @@ bool TimeKeeperClass::isDst( time_t utc, int8_t timezone, DST dst ) {
 			if (tm.Month == 10) {
 				if (tm.Day < 25) return false;
 				
-				int lastSunday = 32-getDayOfWeek(24, 10, (tm.Year-70)%100, (tm.Year-70)/100);
+				int lastSunday = 32-getDayOfWeek(24, 10, (tm.Year+1970)%100, (tm.Year+1970)/100);
 				
 				if (tm.Day < lastSunday) return true;
 				if (tm.Day > lastSunday) return false;
