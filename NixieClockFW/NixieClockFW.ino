@@ -39,6 +39,7 @@ using NixieClock::Display;
 using NixieClock::DisplayACP;
 using NixieClock::Menu;
 
+RTTTL alarmMusic;
 
 //////////////////////////////////////////////////////////////////////////////////////
 
@@ -65,9 +66,6 @@ void gps_sync() {
         time_t time_utc = makeTime(timeinfo_utc);
         time_t latency = GPSTime.millisSinceUpdate();
 
-        
-        
-        
         delay(1000-(latency % 1000));
         time_utc += (latency / 1000)+1;
 
@@ -92,13 +90,15 @@ void display_update() {
   TimeKeeper.getLocalTime(timeinfo_local);
   
   if (Menu.buttonState(BUTTON_UP) || Menu.buttonState(BUTTON_DOWN) || Menu.buttonState(BUTTON_MODE)) {
-    
+    // Display date when any of the buttons are pressed down
+      
     Display.setNumber( ((unsigned long)timeinfo_local.Month) * 10000 + timeinfo_local.Day * 100 + (((unsigned long)timeinfo_local.Year+1970)%100) );
     Display.setDots(true, false, true, false);
     
-    Display.setLed(10,1,0);
+    Display.setLed(255,100,0);
   } else {
-  
+    // Display the time
+    
     Display.setNumber( ((unsigned long)timeinfo_local.Hour) * 10000 + timeinfo_local.Minute * 100 + timeinfo_local.Second );
     Display.setLed(0,0,0);
     if ( timeinfo_local.Second & 0x01 ) {
@@ -111,26 +111,26 @@ void display_update() {
 }
 
 //// SETUP ///////////////////////////////////////////////////////////////////////////
-RTTTL alarmMusic;
 void setup() {
   Serial.begin(230400);
   Serial.write("H3xCat's NixieClock Firmware\r\n");
 
   Display.begin();
   TimeKeeper.begin();
-#if _CONFIG_GPS_ENABLED
-  GPSTime.begin(false, &Serial1);
-#endif
-
+  
+  #if _CONFIG_GPS_ENABLED
+    GPSTime.begin(false, &Serial1);
+  #endif
+  
+  Menu.begin();
+  
+  // Enable anti-cathode-poisoning
   Display.setACP(DisplayACP::ALL, 60000, 500);
 
   TimeKeeper.setDst(DST::USA);
   TimeKeeper.setTimeZone(-8);
-
+  
   alarmMusic.begin(PIN_BUZZER);
-
-
-  Menu.begin();
 }
 
 //// LOOP ////////////////////////////////////////////////////////////////////////////
@@ -152,6 +152,4 @@ void loop() {
   display_update();
 }
 
-//////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////
