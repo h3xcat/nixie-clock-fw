@@ -156,16 +156,6 @@ const char * RTTTL::parseNote( const char * strNote ) {
   else
     buzzer.stop();
 
-
-  Serial.write(strNote);
-  Serial.write("\r\n");
-  Serial.print((uint16_t)(powf(1.05946309, noteId-49)*440 + 0.5), DEC);
-  Serial.print(' ');
-  Serial.write(noteLetter);
-  Serial.print(' ');
-  Serial.print(noteId, DEC);
-  Serial.write("\r\n");
-
   // Skip to delimiter or null byte
   while(*cursor != ',' && *cursor != '\0')
     ++cursor;

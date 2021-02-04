@@ -113,7 +113,6 @@ void GPSTimeClass::processMessage( const char * msg, unsigned long msgTime ){
   if(*(msg+3)=='R' && *(msg+4)=='M' && *(msg+5)=='C'){ // We're mainly interested in time and date, which RMC contains
     connected = true;
 
-    Serial.println(msg);
     if(!isMessageValid( msg )){ // Making sure our message is not corrupt
       Serial.println("GPSTime: Corrupt RMC message!");
       return;
@@ -122,10 +121,12 @@ void GPSTimeClass::processMessage( const char * msg, unsigned long msgTime ){
     char rmc_status[2];
     getMessageArg(rmc_status, msg, 1);
     if(*rmc_status != 'A') {
-      //Serial.println("GPSTime: Received void RMC message!"); // Means no signal (can be caused by weather and such)
+      //Serial.println("GPSTime: Received void RMC message!"); // Means no signal
       return;
     }
       
+    Serial.print("GPSTime: Updating GPS Time... ");
+    Serial.println(msg);
     // Get Time
     char str_time[16] = {0};
     getMessageArg(str_time, msg, 0);
@@ -157,7 +158,7 @@ void GPSTimeClass::processMessage( const char * msg, unsigned long msgTime ){
     long time = atol(str_time);
     long date = atol(date_time);
 
-    int mil = atoi(str_time_decimal);
+    uint32_t mil = atoi(str_time_decimal);
     
     
     utcTime.Second = (time%100);

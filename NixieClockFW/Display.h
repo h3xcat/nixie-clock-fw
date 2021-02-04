@@ -37,7 +37,7 @@ namespace NixieClock {
         static void setDigits( byte * digits );
         static void setDigit( byte digit, byte val );
         static void setNumber( unsigned long num, bool leadingZeros = true );
-        static void setDots( bool leftUpper, bool leftLower, bool rightUpper, bool rightLower );
+        static void setDots( bool leftLower, bool leftUpper, bool rightLower, bool rightUpper );
         static void setDots( bool left, bool right );
         static void setDots( bool on );
         static void setACP( DisplayACP mode, unsigned long cycleInterval = 60000, unsigned long digitInterval = 100 );

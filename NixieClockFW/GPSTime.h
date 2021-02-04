@@ -20,7 +20,7 @@ class GPSTimeClass
 
     static tmElements_t utcTime;
 
-    static unsigned long timeUpdated;
+    static uint32_t timeUpdated;
 
     static GPSTimeStatus status;
 
@@ -30,7 +30,7 @@ class GPSTimeClass
   
     static char msgBuf[256];
     static int msgLen;
-    static unsigned long msgTime;
+    static uint32_t msgTime;
 
     static byte scanCurSetting;
     static bool scanNextSetting;

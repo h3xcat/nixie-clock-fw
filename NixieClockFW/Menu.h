@@ -15,14 +15,20 @@
 namespace NixieClock {
     class MenuClass {
     private:
-        static const uint32_t debounceDelay = 100;
-        static int buttonLastValue[16];
+        static const int16_t debounceThreshold  = 750;
+        static const int16_t debounceCounterMax  = 1000;
+        
+        static int16_t debounceCounter[16];
+        static bool _buttonState[16];
     public:
         static void begin();
         static void update();
 
-        static void buttonUp( );
+        static void buttonUp();
         static void buttonDown();
+        static void buttonMode();
+
+        static bool buttonState(const int button);
     };
 
     extern MenuClass Menu;

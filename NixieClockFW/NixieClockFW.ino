@@ -4,7 +4,7 @@
 // START OF CONFIG ///////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////
 
-#define _CONFIG_NIXIE_UPDATE_INTERVAL 500*ONE_MILLISECOND
+#define _CONFIG_NIXIE_UPDATE_INTERVAL 200*ONE_MILLISECOND
 
 #define _CONFIG_GPS_ENABLED 1 // Enables GPS synchronization on Mega boards
 #define _CONFIG_GPS_SYNC_INTERVAL 30*ONE_MINUTE
@@ -42,67 +42,67 @@ using NixieClock::Menu;
 
 //////////////////////////////////////////////////////////////////////////////////////
 
-char * timeStr( const TimeElements &tm ) {
-  char s_day[10];
-  char s_mon[10];
-  strcpy(s_day, dayShortStr(tm.Wday));
-  strcpy(s_mon, monthShortStr(tm.Month));
-  char str[100];
-  sprintf(str, "%s %s %d %d:%02d:%02d %d", s_day, s_mon, tm.Day, tm.Hour, tm.Minute, tm.Second, tm.Year + 1970);
-  return str;
-}
-
 #if _CONFIG_GPS_ENABLED
-void gps_sync_check() {
-  static unsigned long last_updated = 0;
+void gps_sync() {
+  static uint32_t last_updated = _CONFIG_GPS_SYNC_INTERVAL;
+  
+  if (millis() - last_updated <= _CONFIG_GPS_SYNC_INTERVAL)
+    return;
+  
+    
+  switch (GPSTime.getStatus()) {
+    case IDLE: GPSTime.request(); Serial.println("Initiating GPS sync."); break;
+    case WAITING: break;
+    case FINISHED:
+        last_updated = millis();
 
-  if (millis() - last_updated > _CONFIG_GPS_SYNC_INTERVAL) {
-    switch (GPSTime.getStatus()) {
-      case IDLE: GPSTime.request(); Serial.println("Initiating GPS sync."); break;
-      case WAITING: break;
-      case FINISHED: {
-          last_updated = millis();
+        GPSTime.reset();
+        
+        TimeElements timeinfo_utc = {};
 
-          GPSTime.reset();
-          Serial.println("GPS Sync");
+        GPSTime.getUtcTime( &timeinfo_utc );
 
-          TimeElements timeinfo_utc = {};
+        time_t time_utc = makeTime(timeinfo_utc);
+        time_t latency = GPSTime.millisSinceUpdate();
 
-          GPSTime.getUtcTime( &timeinfo_utc );
+        
+        
+        
+        delay(1000-(latency % 1000));
+        time_utc += (latency / 1000)+1;
 
-          time_t time_utc = makeTime(timeinfo_utc);
-          time_t latency = GPSTime.millisSinceUpdate();
-
-          
-          Serial.println(time_utc, DEC);
-          Serial.println(latency, DEC);
-
-          delay(1000-(latency % 1000));
-          
-          time_utc += (latency / 1000)+1;
-
-          TimeKeeper.setEpoch(time_utc);
-          
-          Serial.write("\r\n");
-        }; break;
-    }
+        TimeKeeper.setEpoch(time_utc);
+        
+        Serial.print("GPS Sync ");
+        Serial.println(time_utc, DEC);
+        Serial.write("\r\n");
+        break;
   }
+
 }
 #endif
 
-void display_update_check() {
-  static unsigned long last_updated = 0;
+void display_update() {
+  static uint32_t last_updated = _CONFIG_NIXIE_UPDATE_INTERVAL;
+  if (millis() - last_updated <= _CONFIG_NIXIE_UPDATE_INTERVAL)
+    return;
+  last_updated = millis();
 
-  if (millis() - last_updated > _CONFIG_NIXIE_UPDATE_INTERVAL) {
-    last_updated = millis();
-
-    TimeElements timeinfo_local = {};
-    TimeKeeper.getLocalTime(timeinfo_local);
-
+  TimeElements timeinfo_local = {};
+  TimeKeeper.getLocalTime(timeinfo_local);
+  
+  if (Menu.buttonState(BUTTON_UP) || Menu.buttonState(BUTTON_DOWN) || Menu.buttonState(BUTTON_MODE)) {
+    
+    Display.setNumber( ((unsigned long)timeinfo_local.Month) * 10000 + timeinfo_local.Day * 100 + (((unsigned long)timeinfo_local.Year+1970)%100) );
+    Display.setDots(true, false, true, false);
+    
+    Display.setLed(10,1,0);
+  } else {
+  
     Display.setNumber( ((unsigned long)timeinfo_local.Hour) * 10000 + timeinfo_local.Minute * 100 + timeinfo_local.Second );
+    Display.setLed(0,0,0);
     if ( timeinfo_local.Second & 0x01 ) {
       Display.setDots(true);
-      //Display.setLed(10,1,0);
     } else {
       Display.setDots(false);
       //Display.setLed(0,0,0);
@@ -127,11 +127,8 @@ void setup() {
   TimeKeeper.setDst(DST::USA);
   TimeKeeper.setTimeZone(-8);
 
-//
-//
-//  alarmMusic.begin(PIN_BUZZER);
-//  alarmMusic.load("korobyeyniki:d=4,o=5,b=e6,8b,8c6, 8d6,16e6,16d6,8c6,8b,a,8a,8c6,e6,8d6,8c6,b,8b,8c6,d6,e6,c6,a,2a,8p,d6,8f6,a6");
-//  alarmMusic.play();
+  alarmMusic.begin(PIN_BUZZER);
+
 
   Menu.begin();
 }
@@ -142,12 +139,17 @@ void loop() {
   Menu.update();
   alarmMusic.update();
 
+//  if(Menu.buttonState(BUTTON_UP)){
+//    alarmMusic.load("fifth:d=4,o=5,b=63:8P,8G5,8G5,8G5,2D#5");
+//    alarmMusic.play();
+//  }
+  
 #if _CONFIG_GPS_ENABLED
   GPSTime.update();
-  gps_sync_check();
+  gps_sync();
 #endif
 
-  display_update_check();
+  display_update();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
