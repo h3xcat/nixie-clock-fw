@@ -90,7 +90,6 @@ void display_update() {
 }
 
 //// SETUP ///////////////////////////////////////////////////////////////////////////
-
 void setup() {
   Serial.begin(230400);
   Serial.write("H3xCat's NixieClock Firmware (" NCS_STR ")\r\n");
@@ -111,7 +110,7 @@ void setup() {
   TimeKeeper.setOffset(-8);
   
   alarmMusic.begin(PIN_BUZZER);
-   alarmMusic.load((char *)"Auld L S:d=4,o=6,b=101:g5,c,8c,c,e,d,8c,d,8e,8d,c,8c,e,g,2a,a,g,8e,e,c,d,8c,d,8e,8d,c,8a5,a5,g5,2c");
+  alarmMusic.load((char *)"Auld L S:d=4,o=6,b=101:g5,c,8c,c,e,d,8c,d,8e,8d,c,8c,e,g,2a,a,g,8e,e,c,d,8c,d,8e,8d,c,8a5,a5,g5,2c");
   //  alarmMusic.play();
 }
 
