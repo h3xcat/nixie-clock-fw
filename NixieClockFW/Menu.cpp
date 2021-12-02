@@ -1,4 +1,5 @@
 #include "Menu.h"
+#include "Pins.h"
 using NixieClock::MenuClass;
 
 MenuClass Menu;

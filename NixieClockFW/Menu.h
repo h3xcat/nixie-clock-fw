@@ -1,12 +1,6 @@
-
-#include <Arduino.h>
-
 #ifndef _NIXIE_CLOCK_MENU_H
 #define _NIXIE_CLOCK_MENU_H
-
-#define PIN_BTN_UP A2
-#define PIN_BTN_DOWN A1
-#define PIN_BTN_MODE A0
+#include "NixieClockFW.h"
 
 #define BUTTON_UP 0
 #define BUTTON_DOWN 1

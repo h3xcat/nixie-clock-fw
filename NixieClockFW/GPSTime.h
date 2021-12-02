@@ -4,8 +4,7 @@
 #include <TimeLib.h>
 #include <HardwareSerial.h>
 
-typedef unsigned char uint8_t;
-typedef unsigned char byte;
+#include "NixieClockFW.h"
 
 class HardwareSerial;
 
@@ -25,24 +24,24 @@ class GPSTimeClass
     static GPSTimeStatus status;
 
     static HardwareSerial * gpsSerial;
-    static unsigned long serialBaud;
-    static byte serialConfig;
+    static uint32_t serialBaud;
+    static uint8_t serialConfig;
   
-    static char msgBuf[256];
-    static int msgLen;
+    static int8_t msgBuf[256];
+    static uint32_t msgLen;
     static uint32_t msgTime;
 
-    static byte scanCurSetting;
+    static uint8_t scanCurSetting;
     static bool scanNextSetting;
-    static unsigned long scanTime;
+    static uint32_t scanTime;
     
-    static bool isMessageValid( const char * msg );
-    static void getMessageArg( char * dst, const char * msg, uint8_t arg );
-    static int getDayOfWeek( int day, int month, int year, int cent );
-    static void processMessage( const char * msg, unsigned long msgTime );
+    static bool isMessageValid( const int8_t * msg );
+    static void getMessageArg( int8_t * dst, const int8_t * msg, uint8_t arg );
+    static uint8_t getDayOfWeek( uint32_t day, uint32_t month, uint32_t year, uint32_t cent );
+    static void processMessage( const int8_t * msg, uint32_t msgTime );
   public:
     // 
-    static void begin( bool autoUpdate, HardwareSerial * serialPort, unsigned long serialBaud = 0, byte serialConfig = SERIAL_8N1);
+    static void begin( bool autoUpdate, HardwareSerial * serialPort, uint32_t serialBaud = 0, uint8_t serialConfig = SERIAL_8N1);
 
     // Updates the library, processes serial data, etc.
     static void update();
@@ -57,9 +56,9 @@ class GPSTimeClass
     static void reset();
 
     // Tells the library to retrieve time from next RMC message
-    static unsigned long millisSinceUpdate();
+    static uint32_t millisSinceUpdate();
 
-    static unsigned short int getYear();
+    static uint16_t getYear();
     static const tmElements_t* getUtcTime();
     static void getUtcTime( tmElements_t* tm );
     static bool isConnected();

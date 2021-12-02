@@ -7,7 +7,7 @@
 TimeKeeperClass TimeKeeper;
 
 DST TimeKeeperClass::dst = DST::NONE;
-int8_t TimeKeeperClass::timezone = 0;
+int8_t TimeKeeperClass::offset = 0;
 
 
 uint8_t TimeKeeperClass::Int2Bcd( uint8_t val ) {
@@ -34,11 +34,11 @@ uint8_t TimeKeeperClass::getDayOfWeek( uint8_t day, uint8_t month, uint8_t year,
   return (q + 13*(m+1)/5 + k + k/4 + j/4 + 5*j - 1) % 7 + 1;
 }
 
-bool TimeKeeperClass::isDst( time_t utc, int8_t timezone, DST dst ) {
+bool TimeKeeperClass::isDst( time_t utc, int8_t offset, DST dst ) {
 	TimeElements tm;
 	switch(dst) {
 		case DST::USA: 
-			breakTime(utc+3600*timezone, tm);
+			breakTime(utc+3600*(long)offset, tm);
 			if (tm.Month < 3 || tm.Month > 11) return false;
 			if (tm.Month > 3 && tm.Month < 11) return true;
 			if (tm.Month == 3) {
@@ -100,18 +100,18 @@ void TimeKeeperClass::begin( ) {
 }
 
 bool TimeKeeperClass::isDst( ) {
-	return isDst(getEpoch(), timezone, dst);
+	return isDst(getEpoch(), offset, dst);
 }
 
 void TimeKeeperClass::getLocalTime( TimeElements &tm ) {
 	time_t epoch = getEpoch( );
-	breakTime(epoch + timezone*3600 + (isDst(epoch, timezone, dst) ? 3600 : 0), tm);
+	breakTime(epoch + offset*3600 + (isDst(epoch, offset, dst) ? 3600 : 0), tm);
 }
-void TimeKeeperClass::setTimeZone( int8_t timezone ) {
-	TimeKeeperClass::timezone = timezone;
+void TimeKeeperClass::setOffset( int8_t offset ) {
+	TimeKeeperClass::offset = offset;
 }
-int8_t TimeKeeperClass::getTimeZone( ) {
-	return timezone;
+int8_t TimeKeeperClass::getOffset( ) {
+	return offset;
 }
 void TimeKeeperClass::setDst( DST dst ) {
 	TimeKeeperClass::dst = dst;

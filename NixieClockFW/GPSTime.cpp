@@ -6,22 +6,22 @@ GPSTimeClass GPSTime;
 
 bool GPSTimeClass::autoUpdate = false;
 tmElements_t GPSTimeClass::utcTime = {};
-unsigned long GPSTimeClass::timeUpdated = 0;
+uint32_t GPSTimeClass::timeUpdated = 0;
 GPSTimeStatus GPSTimeClass::status = IDLE;
 HardwareSerial * GPSTimeClass::gpsSerial = NULL;
-unsigned long GPSTimeClass::serialBaud = 0;
+uint32_t GPSTimeClass::serialBaud = 0;
 byte GPSTimeClass::serialConfig = 0;
-char GPSTimeClass::msgBuf[256] = {};
-int GPSTimeClass::msgLen = 0;
-unsigned long GPSTimeClass::msgTime = 0;
+int8_t GPSTimeClass::msgBuf[256] = {};
+uint32_t GPSTimeClass::msgLen = 0;
+uint32_t GPSTimeClass::msgTime = 0;
 byte GPSTimeClass::scanCurSetting = 0;
 bool GPSTimeClass::scanNextSetting = false;
-unsigned long GPSTimeClass::scanTime = 0;
+uint32_t GPSTimeClass::scanTime = 0;
 bool GPSTimeClass::connected = false;
 
 
 
-void GPSTimeClass::begin( bool autoUpdate, HardwareSerial * serialPort, unsigned long serialBaud = 0, byte serialConfig = SERIAL_8N1 ) {
+void GPSTimeClass::begin( bool autoUpdate, HardwareSerial * serialPort, uint32_t serialBaud, uint8_t serialConfig ) {
   utcTime.Second = 0;
   utcTime.Minute = 0;
   utcTime.Hour = 0;
@@ -46,25 +46,25 @@ void GPSTimeClass::begin( bool autoUpdate, HardwareSerial * serialPort, unsigned
     gpsSerial->begin(serialBaud, serialConfig);
 }
 
-bool GPSTimeClass::isMessageValid( const char * msg ){
-  const char * cur = msg;
+bool GPSTimeClass::isMessageValid( const int8_t * msg ){
+  const int8_t * cur = msg;
 
   if(*cur != '$')
     return false;
   ++cur;
 
-  unsigned char checksum = 0;
+  uint8_t checksum = 0;
   while(*cur != '*'){
     checksum ^= *cur;
     ++cur;
   }
 
-  return *cur && *(cur+1) && *(cur+2) && *(cur+3) == '\0' && (strtol(cur+1,NULL,16) == checksum);
+  return *cur && *(cur+1) && *(cur+2) && *(cur+3) == '\0' && (strtol((char *)cur+1,NULL,16) == checksum);
 }
 
 // Extracts nth argument from NMEA message, null byte terminated
-void GPSTimeClass::getMessageArg( char * dst, const char * msg, uint8_t arg ){
-  char * arg_start = strstr(msg,",")+1;
+void GPSTimeClass::getMessageArg( int8_t * dst, const int8_t * msg, uint8_t arg ){
+  char * arg_start = strstr((const char *)msg,",")+1;
   char * arg_end;
   
   if(arg_start == NULL){
@@ -86,16 +86,16 @@ void GPSTimeClass::getMessageArg( char * dst, const char * msg, uint8_t arg ){
   if(arg_end == NULL)
     arg_end = strstr(arg_start,"*");
 
-  strncpy(dst, arg_start, arg_end - arg_start);
+  strncpy((char *)dst, arg_start, arg_end - arg_start);
   dst[arg_end-arg_start] = 0;
 }
 
-int GPSTimeClass::getDayOfWeek( int day, int month, int year, int cent ){
+uint8_t GPSTimeClass::getDayOfWeek( uint32_t day, uint32_t month, uint32_t year, uint32_t cent ){
   // Zeller's congruence
-  int q = day;
-  int m = month;
-  int k = year;
-  int j = cent;
+  uint32_t q = day;
+  uint32_t m = month;
+  uint32_t k = year;
+  uint32_t j = cent;
 
   if(m <= 2){
     m += 12;
@@ -109,7 +109,7 @@ int GPSTimeClass::getDayOfWeek( int day, int month, int year, int cent ){
   return (q + 13*(m+1)/5 + k + k/4 + j/4 + 5*j - 1) % 7 + 1;
 }
 
-void GPSTimeClass::processMessage( const char * msg, unsigned long msgTime ){
+void GPSTimeClass::processMessage( const int8_t * msg, uint32_t msgTime ){
   if(*(msg+3)=='R' && *(msg+4)=='M' && *(msg+5)=='C'){ // We're mainly interested in time and date, which RMC contains
     connected = true;
 
@@ -118,7 +118,7 @@ void GPSTimeClass::processMessage( const char * msg, unsigned long msgTime ){
       return;
     }
     // Check message status
-    char rmc_status[2];
+    int8_t rmc_status[2];
     getMessageArg(rmc_status, msg, 1);
     if(*rmc_status != 'A') {
       //Serial.println("GPSTime: Received void RMC message!"); // Means no signal
@@ -126,14 +126,14 @@ void GPSTimeClass::processMessage( const char * msg, unsigned long msgTime ){
     }
       
     Serial.print("GPSTime: Updating GPS Time... ");
-    Serial.println(msg);
+    Serial.println((char *)msg);
     // Get Time
-    char str_time[16] = {0};
+    int8_t str_time[16] = {0};
     getMessageArg(str_time, msg, 0);
     if(*str_time == 0)
       return;
 
-    char * str_time_decimal = str_time;
+    int8_t * str_time_decimal = str_time;
     while(*str_time_decimal != 0 && *str_time_decimal != '.')
       ++str_time_decimal;
       
@@ -150,15 +150,15 @@ void GPSTimeClass::processMessage( const char * msg, unsigned long msgTime ){
     str_time_decimal[3] = 0;
     
     // Get Date
-    char date_time[16];
+    int8_t date_time[16];
     getMessageArg(date_time, msg, 8);
     if(*date_time == 0)
       return;
     
-    long time = atol(str_time);
-    long date = atol(date_time);
+    int32_t time = atol((char *)str_time);
+    int32_t date = atol((char *)date_time);
 
-    uint32_t mil = atoi(str_time_decimal);
+    int32_t mil = atoi((char *)str_time_decimal);
     
     
     utcTime.Second = (time%100);
@@ -185,18 +185,19 @@ void GPSTimeClass::processMessage( const char * msg, unsigned long msgTime ){
 // Updates the library, processes serial data, etc.
 void GPSTimeClass::update() { // Scan portion --------------------------------------------
   if(serialBaud == 0){
-    static const long serialBaudRates[] = {4800,38400,9600,19200};
-    static const byte serialConfigs[] = {SERIAL_8N1, SERIAL_8O1};
+    static const uint32_t serialBaudRates[] = {4800,38400,9600,19200};
+    static const uint8_t serialConfigs[] = {SERIAL_8N1, SERIAL_8O1};
 
     if(scanNextSetting){
-
+      
+      // Serial.println("GPSTime: Scanning...");
       scanNextSetting = false;
       scanTime = millis();
 
       scanCurSetting = (scanCurSetting+1)%8;
 
-      byte curBaudRate =      scanCurSetting & 0b00000011;
-      byte curSerialConfig = (scanCurSetting & 0b00000100) >> 2;
+      uint8_t curBaudRate =      scanCurSetting & 0b00000011;
+      uint8_t curSerialConfig = (scanCurSetting & 0b00000100) >> 2;
 
       gpsSerial->end();
       gpsSerial->begin(serialBaudRates[curBaudRate], serialConfigs[curSerialConfig]);
@@ -211,7 +212,7 @@ void GPSTimeClass::update() { // Scan portion ----------------------------------
     }
 
     while(gpsSerial->available()) {
-      unsigned char c = gpsSerial->read();
+      int8_t c = gpsSerial->read();
       if(c == '$'){
         scanTime = millis();
         msgBuf[0] = c;
@@ -221,10 +222,15 @@ void GPSTimeClass::update() { // Scan portion ----------------------------------
         msgBuf[msgLen] = 0;
 
         if(isMessageValid( msgBuf )){
-          Serial.println("GPSTime: Found GPS device!");
+          uint8_t curBaudRate =      scanCurSetting & 0b00000111;
+          uint8_t curSerialConfig = (scanCurSetting & 0b00001000) >> 3;
 
-          byte curBaudRate =      scanCurSetting & 0b00000111;
-          byte curSerialConfig = (scanCurSetting & 0b00001000) >> 3;
+          Serial.println((char *)msgBuf);
+          Serial.print("GPSTime: Found GPS device!");
+          Serial.print(" baud("); Serial.print(serialBaudRates[curBaudRate],DEC); Serial.print(") ");
+          Serial.print("config("); Serial.print(serialConfigs[curSerialConfig],DEC); Serial.print(")\r\n");
+          Serial.println();
+
           
           msgBuf[0] = 0;
           msgLen = 0;
@@ -232,14 +238,14 @@ void GPSTimeClass::update() { // Scan portion ----------------------------------
           serialBaud = serialBaudRates[curBaudRate];
           serialConfig = serialConfigs[curSerialConfig];
         }
-      }else if(msgLen < 200){
+      }else if(msgLen < 255){
         msgBuf[msgLen++] = c;
       }else{
         msgLen = 0;
         scanNextSetting = true;
       }
     }
-    if(millis()-scanTime > 500)
+    if(millis()-scanTime > 1000)
       scanNextSetting = true;
 
   } else { // Processing portion --------------------------------------------
@@ -282,7 +288,7 @@ void GPSTimeClass::reset(){
   status = IDLE;
 }
 
-unsigned long GPSTimeClass::millisSinceUpdate(){
+uint32_t GPSTimeClass::millisSinceUpdate(){
   return millis() - timeUpdated;
 }
 
