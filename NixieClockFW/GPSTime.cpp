@@ -110,6 +110,7 @@ uint8_t GPSTimeClass::getDayOfWeek( uint32_t day, uint32_t month, uint32_t year,
 }
 
 void GPSTimeClass::processMessage( const int8_t * msg, uint32_t msgTime ){
+  //Serial.println((char *)msg);
   if(*(msg+3)=='R' && *(msg+4)=='M' && *(msg+5)=='C'){ // We're mainly interested in time and date, which RMC contains
     connected = true;
 
@@ -120,10 +121,18 @@ void GPSTimeClass::processMessage( const int8_t * msg, uint32_t msgTime ){
     // Check message status
     int8_t rmc_status[2];
     getMessageArg(rmc_status, msg, 1);
+    
+    static uint32_t void_counter = 0;
     if(*rmc_status != 'A') {
-      //Serial.println("GPSTime: Received void RMC message!"); // Means no signal
+       
+      if(void_counter++ % 100 == 0){
+        Serial.print("GPSTime: Received void RMC message! ("); // Means no signal
+        Serial.print(void_counter);
+        Serial.println(')');
+      }
       return;
     }
+    void_counter = 0;
       
     Serial.print("GPSTime: Updating GPS Time... ");
     Serial.println((char *)msg);
@@ -210,7 +219,6 @@ void GPSTimeClass::update() { // Scan portion ----------------------------------
       msgBuf[0] = 0;
       msgLen = 0;
     }
-
     while(gpsSerial->available()) {
       int8_t c = gpsSerial->read();
       if(c == '$'){
@@ -251,7 +259,6 @@ void GPSTimeClass::update() { // Scan portion ----------------------------------
   } else { // Processing portion --------------------------------------------
     while(gpsSerial->available()) {
       int c = gpsSerial->read();
-      
       if(c == '$') {
         msgBuf[0] = c;
         msgLen = 1;

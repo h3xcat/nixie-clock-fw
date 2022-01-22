@@ -3,5 +3,6 @@
     "configuration": "cpu=atmega2560",
     "board": "arduino:avr:mega",
     "output": "../build",
-    "port": "COM4"
+    "port": "COM4",
+    "buildPreferences": [["compiler.cpp.extra_flags", "-D__AVR_ATmega2560__"]]
 }

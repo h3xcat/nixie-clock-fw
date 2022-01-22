@@ -1,4 +1,3 @@
-#line 1 "c:\\dev\\nixie-clock-fw\\NixieClockFW\\Display.h"
 #ifndef _NIXIE_CLOCK_DISPLAY_H
 #define _NIXIE_CLOCK_DISPLAY_H
 
@@ -7,14 +6,14 @@
 #include <SPI.h>
 #include "NixieClockFW.h"
 
-#ifdef NCS318
+#ifdef NCS318_1
   #include <Adafruit_NeoPixel.h>
 #endif
 
 namespace NixieClock {
     enum class DisplayACP {NONE,SINGLE1,SINGLE2,ALL};
 
-    class DisplayClass {
+    class DisplayDriverC {
       private:
         static uint64_t data;
         static uint64_t lastData;
@@ -44,7 +43,7 @@ namespace NixieClock {
         static void setLed( uint8_t red, uint8_t green, uint8_t blue );
     };
 
-    extern DisplayClass Display;
+    extern DisplayDriverC DisplayDriver;
 }
 
 #endif

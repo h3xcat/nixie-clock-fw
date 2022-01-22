@@ -1,37 +1,37 @@
-#include "Display.h"
+#include "DisplayDriver.h"
 
 
-using NixieClock::DisplayClass;
+using NixieClock::DisplayDriverC;
 using NixieClock::DisplayACP;
 
-DisplayClass Display;
+DisplayDriverC DisplayDriver;
 
-uint64_t DisplayClass::data = 0;
-uint64_t DisplayClass::lastData = 0;
-uint32_t DisplayClass::lastUpdated = 0;
+uint64_t DisplayDriverC::data = 0;
+uint64_t DisplayDriverC::lastData = 0;
+uint32_t DisplayDriverC::lastUpdated = 0;
 
-DisplayACP DisplayClass::acpMode = DisplayACP::NONE;
-bool DisplayClass::acpInProgress = 0;
-uint32_t DisplayClass::acpCycleInterval = 0;
-uint32_t DisplayClass::acpDigitInterval = 0;
-uint32_t DisplayClass::nextAcpCycle = 0;
-uint32_t DisplayClass::nextAcpDigit = 0;
-uint32_t DisplayClass::acpCounter = 0;
+DisplayACP DisplayDriverC::acpMode = DisplayACP::NONE;
+bool DisplayDriverC::acpInProgress = 0;
+uint32_t DisplayDriverC::acpCycleInterval = 0;
+uint32_t DisplayDriverC::acpDigitInterval = 0;
+uint32_t DisplayDriverC::nextAcpCycle = 0;
+uint32_t DisplayDriverC::nextAcpDigit = 0;
+uint32_t DisplayDriverC::acpCounter = 0;
 
-#ifdef NCS318
+#ifdef NCS318_1
   Adafruit_NeoPixel leds = Adafruit_NeoPixel(NUMLED, PIN_LED, NEO_GRB + NEO_KHZ800);
 #endif
 
-void DisplayClass::begin( ){
+void DisplayDriverC::begin( ){
   pinMode(PIN_HV5122_OE, OUTPUT);
 
-  #ifdef NCS314
+  #ifdef NCS314_2
     pinMode(PIN_LED_RED, OUTPUT);
     pinMode(PIN_LED_GREEN, OUTPUT);
     pinMode(PIN_LED_BLUE, OUTPUT);
   #endif
 
-  #ifdef NCS318
+  #ifdef NCS318_1
     leds.begin();
     leds.setBrightness(50);
   #endif
@@ -40,7 +40,7 @@ void DisplayClass::begin( ){
 
   SPI.begin();
 }
-void DisplayClass::update( ){
+void DisplayDriverC::update( ){
   if(acpInProgress) {
     acp();
     return;
@@ -64,7 +64,7 @@ void DisplayClass::update( ){
   sendData();
 }
 
-void DisplayClass::acp( ){
+void DisplayDriverC::acp( ){
   uint64_t oldData = data;
   switch(acpMode) {
     case DisplayACP::SINGLE1:
@@ -133,7 +133,7 @@ void DisplayClass::acp( ){
   data = oldData;
 }
 
-void DisplayClass::sendData( ){
+void DisplayDriverC::sendData( ){
   static SPISettings spiSettings = SPISettings(4e6, MSBFIRST, SPI_MODE2);
 
   uint8_t * dataArray = ((uint8_t *)(&data));
@@ -148,13 +148,13 @@ void DisplayClass::sendData( ){
   digitalWrite(PIN_HV5122_OE, HIGH);
 }
 
-void DisplayClass::setDigitsStr( const uint8_t * digitsStr ){
+void DisplayDriverC::setDigitsStr( const uint8_t * digitsStr ){
   static uint8_t digits[6];
   for(int i = 0; i<6;++i)
     digits[i] = (digitsStr[i]>=0x30 && digitsStr[i]<=0x39) ? (digitsStr[i] - 0x30) : 0xFF;
   setDigits(digits);
 }
-void DisplayClass::setDigit( uint8_t digit, uint8_t val ) {
+void DisplayDriverC::setDigit( uint8_t digit, uint8_t val ) {
   switch(digit) {
     case 0:
       data &= ~(0x3FFull);
@@ -188,7 +188,7 @@ void DisplayClass::setDigit( uint8_t digit, uint8_t val ) {
       break;
   }
 }
-void DisplayClass::setDigits( uint8_t * digits ){
+void DisplayDriverC::setDigits( uint8_t * digits ){
   data &= ~( (0x3FFull) | (0x3FFull<<10) | (0x3FFull<<20) | (0x3FFull<<32) | (0x3FFull<<42) | (0x3FFull<<52) );
 
   if(digits[0]<10)
@@ -204,7 +204,7 @@ void DisplayClass::setDigits( uint8_t * digits ){
   if(digits[5]<10)
     data |= ( 1ull << (digits[5]+52) );
 }
-void DisplayClass::setNumber( uint32_t num, bool leadingZeros ){
+void DisplayDriverC::setNumber( uint32_t num, bool leadingZeros ){
   static uint8_t digits[6] = {0xFF};
 
   for(int i = 5; i>=0;--i){
@@ -219,34 +219,34 @@ void DisplayClass::setNumber( uint32_t num, bool leadingZeros ){
     setDigits(digits);
   }
 }
-void DisplayClass::setDots( bool leftLower, bool leftUpper, bool rightLower, bool rightUpper ){
+void DisplayDriverC::setDots( bool leftLower, bool leftUpper, bool rightLower, bool rightUpper ){
   data &= ~( (1ull << 30) | (1ull << 31) | (1ull<<62) | (1ull<<63) );
   data |= ((uint64_t)leftLower << 30) 
     | ((uint64_t)leftUpper << 31) 
     | ((uint64_t)rightLower << 62) 
     | ((uint64_t)rightUpper << 63);
 }
-void DisplayClass::setDots( bool left, bool right ){
+void DisplayDriverC::setDots( bool left, bool right ){
   setDots(left, left, right, right);
 }
-void DisplayClass::setDots( bool on ){
+void DisplayDriverC::setDots( bool on ){
   setDots(on,on,on,on);
 }
 
-void DisplayClass::setACP( DisplayACP mode, uint32_t cycleInterval, uint32_t digitInterval ){
+void DisplayDriverC::setACP( DisplayACP mode, uint32_t cycleInterval, uint32_t digitInterval ){
   acpMode = mode;
   acpCycleInterval = cycleInterval;
   acpDigitInterval = digitInterval;
 }
 
-void DisplayClass::setLed( uint8_t red, uint8_t green, uint8_t blue ) {
-  #ifdef NCS314
+void DisplayDriverC::setLed( uint8_t red, uint8_t green, uint8_t blue ) {
+  #ifdef NCS314_2
     analogWrite(PIN_LED_RED, red);
     analogWrite(PIN_LED_GREEN, green);
     analogWrite(PIN_LED_BLUE, blue);
   #endif
   
-  #ifdef NCS318
+  #ifdef NCS318_1
     for(int i=0;i<8;i++){
       leds.setPixelColor(i, leds.Color(red, green, blue)); 
     }

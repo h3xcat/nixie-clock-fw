@@ -4,7 +4,7 @@
 #include <Tone.h>
 
 #include "Menu.h"
-#include "Display.h"
+#include "DisplayDriver.h"
 #include "TimeKeeper.h"
 #include "RTTTL.h"
 
@@ -14,7 +14,7 @@
 
 //////////////////////////////////////////////////////////////////////////////////////
 
-using NixieClock::Display;
+using NixieClock::DisplayDriver;
 using NixieClock::DisplayACP;
 using NixieClock::Menu;
 
@@ -67,23 +67,26 @@ void display_update() {
   TimeElements timeinfo_local = {};
   TimeKeeper.getLocalTime(timeinfo_local);
   
+
+
+  
   if (Menu.buttonState(BUTTON_UP) || Menu.buttonState(BUTTON_DOWN) || Menu.buttonState(BUTTON_MODE)) {
     // Display date when any of the buttons are pressed down
       
-    Display.setNumber( ((unsigned long)timeinfo_local.Month) * 10000 + timeinfo_local.Day * 100 + (((unsigned long)timeinfo_local.Year+1970)%100) );
-    Display.setDots(true, false, true, false);
+    DisplayDriver.setNumber( ((unsigned long)timeinfo_local.Month) * 10000 + timeinfo_local.Day * 100 + (((unsigned long)timeinfo_local.Year+1970)%100) );
+    DisplayDriver.setDots(true, false, true, false);
     
-    Display.setLed(255,100,0);
+    DisplayDriver.setLed(255,100,0);
   } else {
     // Display the time
     
-    Display.setNumber( ((unsigned long)timeinfo_local.Hour) * 10000 + timeinfo_local.Minute * 100 + timeinfo_local.Second );
-    Display.setLed(0,0,0);
+    DisplayDriver.setNumber( ((unsigned long)timeinfo_local.Hour) * 10000 + timeinfo_local.Minute * 100 + timeinfo_local.Second );
+    DisplayDriver.setLed(0,0,0);
     if ( timeinfo_local.Second & 0x01 ) {
-      Display.setDots(true);
+      DisplayDriver.setDots(true);
       // Display.setLed(255,0,0);
     } else {
-      Display.setDots(false);
+      DisplayDriver.setDots(false);
       // Display.setLed(0,0,0);
     }
   }
@@ -94,7 +97,7 @@ void setup() {
   Serial.begin(230400);
   Serial.write("H3xCat's NixieClock Firmware (" NCS_STR ")\r\n");
   
-  Display.begin();
+  DisplayDriver.begin();
   TimeKeeper.begin();
   
   #if _CONFIG_GPS_ENABLED
@@ -104,7 +107,7 @@ void setup() {
   Menu.begin();
   
   // // Enable anti-cathode-poisoning
-  Display.setACP(DisplayACP::ALL, 60000, 500);
+  DisplayDriver.setACP(DisplayACP::ALL, 60000, 500);
 
   TimeKeeper.setDst(DST::USA);
   TimeKeeper.setOffset(-8);
@@ -116,7 +119,7 @@ void setup() {
 
 //// LOOP ////////////////////////////////////////////////////////////////////////////
 void loop() {
-  Display.update();
+  DisplayDriver.update();
   Menu.update();
   alarmMusic.update();
 

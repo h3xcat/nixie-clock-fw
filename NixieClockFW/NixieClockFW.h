@@ -11,19 +11,19 @@
 #include "Config.h"
 
 
-#define _NCS_COUNT (defined(NCS314) + defined(NCS318))
+#define _NCS_COUNT (defined(NCS314_2) + defined(NCS318_1))
 
 #if _NCS_COUNT > 1
-    #error Both NCS314 and NCS318 are defined, only one of them must be defined
+    #error Both NCS314_2 and NCS318_1 are defined, only one of them must be defined
 #elif _NCS_COUNT == 0
-    #error NCS314 or NCS318 has to be defined
+    #error NCS314_2 or NCS318_1 has to be defined
 #endif
 
 
-#if defined(NCS314)
-    #define NCS_STR "NCS314"
-#elif defined(NCS318)
-    #define NCS_STR "NCS318"
+#if defined(NCS314_2)
+    #define NCS_STR "NCS314_2"
+#elif defined(NCS318_1)
+    #define NCS_STR "NCS318_1"
 #endif
 
 #if !defined(ARDUINO_AVR_MEGA2560)

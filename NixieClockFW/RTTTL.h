@@ -13,7 +13,7 @@ class RTTTL {
   	uint8_t defaultOctave;
   	uint16_t beatsPerMinute;
 
-    uint16_t nextNoteStr;
+    const char * nextNoteStr;
     uint32_t notePlayed;
     uint32_t noteDuration;
 

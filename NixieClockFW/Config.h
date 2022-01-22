@@ -9,15 +9,15 @@
 
 #define _CONFIG_IR_ENABLED 1 // Enables IR remote functionality
 
-// #define NCS314
-#define NCS318
+// #define NCS314_2
+#define NCS318_1
 
 //////////////////////////////////////////////////////////////////////////////////////
 // END OF CONFIG /////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////
 
 // Pin Configurations ////////////////////////////////////////////////////////////////
-#if defined( NCS314 )
+#if defined( NCS314_2 )
     #define PIN_HV5122_OE 10
     #define PIN_LED_RED 9
     #define PIN_LED_GREEN 6
@@ -26,7 +26,7 @@
     #define PIN_BTN_UP A2
     #define PIN_BTN_DOWN A1
     #define PIN_BTN_MODE A0
-#elif defined( NCS318 )
+#elif defined( NCS318_1 )
     #define PIN_HV5122_OE 10
     // #define PIN_LED_RED 9
     // #define PIN_LED_GREEN 6
