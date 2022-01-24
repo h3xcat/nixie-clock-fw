@@ -2,7 +2,7 @@
 // START OF CONFIG ///////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////
 
-#define _CONFIG_NIXIE_UPDATE_INTERVAL 200*ONE_MILLISECOND
+#define _CONFIG_NIXIE_UPDATE_INTERVAL 100*ONE_MILLISECOND
 
 #define _CONFIG_GPS_ENABLED 1 // Enables GPS synchronization on Mega boards
 #define _CONFIG_GPS_SYNC_INTERVAL 30*ONE_MINUTE

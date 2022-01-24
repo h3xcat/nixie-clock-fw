@@ -54,10 +54,13 @@ void gps_sync() {
         Serial.write("\r\n");
         break;
   }
-
 }
 #endif
-
+enum class ClockStates {
+  ST_CLOCK,
+  ST_DATE,
+  ST_ACP,
+};
 void display_update() {
   static uint32_t last_updated = _CONFIG_NIXIE_UPDATE_INTERVAL;
   if (millis() - last_updated <= _CONFIG_NIXIE_UPDATE_INTERVAL)
@@ -69,26 +72,118 @@ void display_update() {
   
 
 
+  static uint32_t state_timer = 10000;
+
+  static uint32_t clock_number = 000000;
+  static uint32_t clock_number_live = 000000;
+  static uint32_t date_number = 000000;
+  static uint32_t date_number_live = 000000;
+  
+  static uint32_t acpCounter[6] = {0};
+  
+  clock_number_live = ((unsigned long)timeinfo_local.Hour) * 10000 + timeinfo_local.Minute * 100 + timeinfo_local.Second;
+  date_number_live = ((unsigned long)timeinfo_local.Month) * 10000 + timeinfo_local.Day * 100 + (((unsigned long)timeinfo_local.Year+1970)%100);
+  static uint32_t transition_updated = 0;
+  
+  static bool acpReady[6] = {0};
+  uint32_t tnumber = 0;
+  bool okTransition = false;
+  int offset = 0;
+  static ClockStates acp_next_state = ClockStates::ST_CLOCK;
+  static ClockStates current_state = ClockStates::ST_CLOCK;
+  switch (current_state){
+    case ClockStates::ST_CLOCK:
+      clock_number = clock_number_live;
+
+      DisplayDriver.setNumber( clock_number );
+      // DisplayDriver.setLed(0,0,0);
+
+      if ( timeinfo_local.Second & 0x01 ) {
+        DisplayDriver.setDots(true);
+      } else {
+        DisplayDriver.setDots(false);
+      }
+      DisplayDriver.setLed(0,0,0);
+
+      if (millis() - state_timer > 60000){
+        state_timer = millis();
+        current_state = ClockStates::ST_ACP;
+        acp_next_state = ClockStates::ST_DATE;
+        memset(acpCounter, 0, sizeof(acpCounter));
+        memset(acpReady, 0, sizeof(acpReady));
+      }
+      break;
+    case ClockStates::ST_DATE:
+      date_number = date_number_live;
+      
+      DisplayDriver.setNumber( date_number );
+      DisplayDriver.setDots(true, false, true, false);
+      // DisplayDriver.setLed(250,1,0);
+      if (millis() - state_timer > 5000){
+        state_timer = millis();
+        current_state = ClockStates::ST_ACP;
+        acp_next_state = ClockStates::ST_CLOCK;
+        memset(acpCounter, 0, sizeof(acpCounter));
+        memset(acpReady, 0, sizeof(acpReady));
+      }
+      break;
+    case ClockStates::ST_ACP:
+      static uint32_t pow10[10] = {1, 10, 100, 1000, 10000, 100000};
+      DisplayDriver.setDots(true, true, true, true);
+      // DisplayDriver.setLed(0,0,0);
+      okTransition = true;
+      if (millis() - transition_updated > 200){
+        transition_updated = millis();
+
+        // Generate number for Display
+        for(size_t i = 0; i<6; ++i){
+          acpCounter[i] += 1;
+          
+          uint32_t digit_live;
+          uint32_t digit;
+          
+          if(acp_next_state == ClockStates::ST_DATE){
+            digit_live = (date_number_live/pow10[5-i]) % 10;
+            digit = (acpCounter[i]%10 + (clock_number/pow10[5-i])%10) % 10;
+          }else if(acp_next_state == ClockStates::ST_CLOCK){
+            digit_live = (clock_number_live/pow10[5-i]) % 10;
+            digit = (acpCounter[i]%10 + (date_number/pow10[5-i])%10) % 10;
+          }
+
+          // Check if digits are ready
+          if(!acpReady[i] && acpCounter[i] > 10 && digit == digit_live){
+            acpReady[i] = true;
+          }
+
+          if(acpReady[i]){
+            tnumber += digit_live * pow10[5-i];
+          }else{
+            tnumber += digit * pow10[5-i];
+            okTransition = false;
+          }
+        }
+
+        Serial.println(tnumber);
+        DisplayDriver.setNumber( tnumber );
+
+      }else{
+        okTransition = false;
+      }
+
+      if (okTransition){
+        state_timer = millis();
+        current_state = acp_next_state;
+      }
+      break;
+  }
   
   if (Menu.buttonState(BUTTON_UP) || Menu.buttonState(BUTTON_DOWN) || Menu.buttonState(BUTTON_MODE)) {
     // Display date when any of the buttons are pressed down
       
-    DisplayDriver.setNumber( ((unsigned long)timeinfo_local.Month) * 10000 + timeinfo_local.Day * 100 + (((unsigned long)timeinfo_local.Year+1970)%100) );
-    DisplayDriver.setDots(true, false, true, false);
-    
-    DisplayDriver.setLed(255,100,0);
   } else {
     // Display the time
-    
-    DisplayDriver.setNumber( ((unsigned long)timeinfo_local.Hour) * 10000 + timeinfo_local.Minute * 100 + timeinfo_local.Second );
-    DisplayDriver.setLed(0,0,0);
-    if ( timeinfo_local.Second & 0x01 ) {
-      DisplayDriver.setDots(true);
-      // Display.setLed(255,0,0);
-    } else {
-      DisplayDriver.setDots(false);
-      // Display.setLed(0,0,0);
-    }
+
+
   }
 }
 
@@ -107,7 +202,7 @@ void setup() {
   Menu.begin();
   
   // // Enable anti-cathode-poisoning
-  DisplayDriver.setACP(DisplayACP::ALL, 60000, 500);
+  // DisplayDriver.setACP(DisplayACP::ALL, 60000, 500);
 
   TimeKeeper.setDst(DST::USA);
   TimeKeeper.setOffset(-8);
@@ -124,6 +219,12 @@ void loop() {
   alarmMusic.update();
 
  if(Menu.buttonState(BUTTON_UP)){
+  TimeKeeper.setDst(DST::USA);
+  TimeKeeper.setOffset(-8);
+ }
+ if(Menu.buttonState(BUTTON_DOWN)){
+  TimeKeeper.setDst(DST::NONE);
+  TimeKeeper.setOffset(0);
  }
   
 #if _CONFIG_GPS_ENABLED
